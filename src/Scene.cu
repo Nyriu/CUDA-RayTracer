@@ -17,6 +17,17 @@ void Scene::addAmbientLight(AmbientLight* light) {
 }
 
 __host__ void Scene::shapes_to_device() {
+
+  /// DEBUG
+  std::cout << 
+    "\nsizeof(SceneObject) = " << sizeof(SceneObject) << 
+    "\nsizeof(ImplicitShape) = " << sizeof(ImplicitShape) << 
+    "\nsizeof(Sphere) = " << sizeof(Sphere) << 
+    std::endl;
+  /// END /// DEBUG
+
+
+
   size_t total_size = 0;
   for (Sphere *sph : shapes_) {
     total_size += sizeof(*sph);

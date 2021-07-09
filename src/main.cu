@@ -80,6 +80,8 @@ class Renderer {
       dim3 threads(16,16);
       //dim3 grids(IMG_W, IMG_H);
       //dim3 threads(1);
+      //float grids = 1;
+      //dim3 threads(IMG_W, IMG_H);
 
       Camera *devCamPtr = nullptr;
       Tracer *devTrcPtr = nullptr; // TODO
@@ -174,36 +176,46 @@ int main() {
   Camera cam;
   Scene sce;
 
-  // Init Random scene
-  int spheres_num = 100;
-  srand( (unsigned)time(NULL) );
-  for (int i=0; i<spheres_num; i++) {
-    point3 pos(
-        (float) rnd(4.0f) - 2,
-        (float) rnd(4.0f) - 2,
-        (float) rnd(4.0f) - 2
-        );
-    float radius = (float) rnd(0.3f) + 0.1;
-    color c(
-        (float) rnd(1.0f),
-        (float) rnd(1.0f),
-        (float) rnd(1.0f)
-        );
-    sce.addShape(new Sphere(
-          pos,
-          radius,
-          c
-          )
-        );
-  }
+  //// Init Random scene
+  //int spheres_num = 100;
+  //srand( (unsigned)time(NULL) );
+  //for (int i=0; i<spheres_num; i++) {
+  //  point3 pos(
+  //      (float) rnd(4.0f) - 2,
+  //      (float) rnd(4.0f) - 2,
+  //      (float) rnd(4.0f) - 2
+  //      );
+  //  float radius = (float) rnd(0.3f) + 0.1;
+  //  color c(
+  //      (float) rnd(1.0f),
+  //      (float) rnd(1.0f),
+  //      (float) rnd(1.0f)
+  //      );
+  //  sce.addShape(new Sphere(
+  //        pos,
+  //        radius,
+  //        c
+  //        )
+  //      );
+  //}
 
   //sce.addShape(new Sphere(1, color(0.5, 0.8, 0.7)));
-  //sce.addShape(new Sphere(point3(1.5,0,0), .5));
-  //sce.addLight(new PointLight(point3(5,4,3), color(1), color(80)));
+  //sce.addShape(new Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7)));
+
+  //auto obj = Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
+  auto obj = Sphere(1, color(0.7, 0.7, 0.7));
+  ////obj.translate(vec3(0,1,-1));
+  //obj.translate(vec3(0,0,-1));
+  //obj.translate(vec3(0,0,-1));
+  //obj.translate(vec3(-1,1,1));
+  //obj.update();
+  sce.addShape(&obj);
+
+  sce.addLight(new PointLight(point3(5,4,3), color(1), 80));
   //sce.addLight(new PointLight(point3(5,4,3), color(1)));
   //sce.addLight(new Light(point3(5,4,3), color(1)));
-  sce.addLight(new PointLight(point3( 5,4,3), color(0.3,1,0.5)));
-  sce.addLight(new PointLight(point3(-4,4,3), color(1,0.3,0.5), 50));
+  //sce.addLight(new PointLight(point3( 5,4,3), color(0.3,1,0.5)));
+  //sce.addLight(new PointLight(point3(-4,4,3), color(1,0.3,0.5), 50));
   sce.addAmbientLight(new AmbientLight());
 
   Renderer renderer;
