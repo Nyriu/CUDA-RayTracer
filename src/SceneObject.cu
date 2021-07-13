@@ -18,13 +18,13 @@ __device__ point3 SceneObject::localToWorldP(const point3& target) const {
   return model_ * vec4(target,1);
 }
 
-__host__ __device__ vec3   SceneObject::wordToLocal (const vec3& target, const bool as_point) const {
+__host__ __device__ vec3   SceneObject::worldToLocal (const vec3& target, const bool as_point) const {
   return model_inv_ * vec4(target, (int) as_point);
 }
-__host__ __device__ vec3   SceneObject::wordToLocalV(const vec3& target) const {
+__host__ __device__ vec3   SceneObject::worldToLocalV(const vec3& target) const {
   return model_inv_ * vec4(target, 0);
 }
-__host__ __device__ point3 SceneObject::wordToLocalP(const point3& target) const {
+__host__ __device__ point3 SceneObject::worldToLocalP(const point3& target) const {
   return model_inv_ * vec4(target, 1);
 }
 

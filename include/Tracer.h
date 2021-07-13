@@ -4,14 +4,14 @@
 #include "common.h"
 #include "Ray.h"
 #include "Scene.h"
+#include "ImplicitShape.h"
 
 // TODO It this the right place?
 class HitRecord {
   //private: // TODO + getters and setters
   public:
     const Ray *r_ = nullptr;
-    //const ImplicitShape *shape_ = nullptr; // TODO
-    const Sphere *sphere_ = nullptr; // TODO use impl shapes
+    const ImplicitShape *shape_ = nullptr;
     float t_ = -1;         // hit time
     point3 p_ = point3(0); // hit point
     vec3 n_ = vec3(0);     // normal at p_
@@ -20,34 +20,29 @@ class HitRecord {
   public:
     __device__ HitRecord() : // Empty HitRecord // that's a miss
       r_(nullptr),
-      //shape_(nullptr),
-      sphere_(nullptr),
+      shape_(nullptr),
       t_(-1), p_(point3()), n_(vec3())//, alb_(Color(.35))
   {}
     __device__ HitRecord(const float t_max) : // that's a miss
       r_(nullptr),
-      //shape_(nullptr),
-      sphere_(nullptr),
+      shape_(nullptr),
       t_(t_max), p_(point3()), n_(vec3())//, alb_(Color(.35))
   {}
     __device__ HitRecord(
         const Ray *r,
-        //const ImplicitShape *shape,
-        const Sphere *sphere,
+        const ImplicitShape *shape,
         const float t,
         const point3 p,
         const vec3 n//, //const color alb//, const float d
         ) : r_(r),
-    //shape_(shape),
-    sphere_(sphere),
+    shape_(shape),
     t_(t), p_(p), n_(n)//, alb_(alb)
   {}
 
     __device__ bool isMiss() const {
       return
         r_     == nullptr ||
-        //shape_ == nullptr ||
-        sphere_ == nullptr ||
+        shape_ == nullptr ||
         t_ < 0             //|| other info?
         ;
     }

@@ -33,14 +33,18 @@ class SceneObject {
     }
     __host__ __device__ void update_model();
     __host__ __device__ void update_model_inv();
+
+    //__host__ __device__ SceneObject(con  robe qua);
+
   public:
+    __host__ __device__ SceneObject() { init(); }
     __host__ __device__ vec3   localToWorld (const vec3& target, const bool as_point) const;
     __host__ __device__ vec3   localToWorldV(const vec3& target) const;
     __device__ point3 localToWorldP(const point3& target) const;
 
-    __host__ __device__ vec3   wordToLocal (const vec3& target, const bool as_point) const;
-    __host__ __device__ vec3   wordToLocalV(const vec3& target) const;
-    __host__ __device__ point3 wordToLocalP(const point3& target) const;
+    __host__ __device__ vec3   worldToLocal (const vec3& target, const bool as_point) const;
+    __host__ __device__ vec3   worldToLocalV(const vec3& target) const;
+    __host__ __device__ point3 worldToLocalP(const point3& target) const;
 
     __host__ __device__ SceneObject translate(const float x, const float y, const float z);
     __host__ __device__ SceneObject translate(const vec3& t);

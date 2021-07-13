@@ -4,13 +4,13 @@
 #include <vector>
 
 #include "common.h"
-#include "Sphere.h"
+#include "ImplicitShape.h"
 #include "Camera.h"
 #include "Light.h"
 
 class Scene {
   public:
-    using Shapes = std::vector<Sphere*>; 
+    using Shapes = std::vector<ImplicitShape*>; 
     using Lights = std::vector<Light*>;
 
   private:
@@ -19,8 +19,8 @@ class Scene {
     AmbientLight* ambientLight_ = nullptr;
 
     Scene *devPtr_ = nullptr;
-    Sphere *devSpheres_ = nullptr;
-    int spheres_num_ = 0; // number of spheres
+    //ImplicitShape *devShapes_ = nullptr;
+    int shapes_num_ = 0; // number of shapes
     Light *devLights_ = nullptr;
     int lights_num_ = 0; // number of lights
     AmbientLight *devAmbLight_ = nullptr;
@@ -28,15 +28,14 @@ class Scene {
     Scene() = default;
     Scene(Shapes shapes, Lights lights) : shapes_(shapes), lights_(lights) {}
 
-    //void addShape(ImplicitShape* shape); // TODO shape hierarchy
-    void addShape(Sphere* sph);
+    void addShape(ImplicitShape* shape);
     void addLight(Light* light);
     void addAmbientLight(AmbientLight* light);
 
     __device__ __host__ bool hasAmbientLight() const { return ambientLight_ != nullptr; }
 
-    __device__ Sphere* getShapes() const { return devSpheres_; }
-    __device__ int getShapesNum() const { return spheres_num_; }
+    __device__ ImplicitShape* getShapes() const; // { return devShapes_; }
+    __device__ int getShapesNum() const { return shapes_num_; }
     __device__ Light* getLights() const { return devLights_; }
     __device__ int getLightsNum() const { return lights_num_; }
     __device__ AmbientLight* getAmbientLight() const { return devAmbLight_; }

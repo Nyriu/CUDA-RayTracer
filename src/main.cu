@@ -1,12 +1,6 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include <iostream>
-//#include <stdlib.h>
-//
-//#ifdef __clang__
-//#include <__clang_cuda_math.h>
-//#include <__clang_cuda_builtin_vars.h>
-//#endif
 
 #include <GLFW/glfw3.h>
 
@@ -16,7 +10,7 @@
 #define rnd(x) (x*rand() / (float)RAND_MAX)
 
 #include "common.h"
-#include "Sphere.h"
+#include "ImplicitShape.h"
 #include "Light.h"
 #include "Scene.h"
 #include "Ray.h"
@@ -33,6 +27,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 // Globals
 #define IMG_H 512
 #define IMG_W 512
+//#define IMG_H 64
+//#define IMG_W 64
 
 // TODO
 //#define IMG_H 1080
@@ -176,40 +172,42 @@ int main() {
   Camera cam;
   Scene sce;
 
-  //// Init Random scene
-  //int spheres_num = 100;
-  //srand( (unsigned)time(NULL) );
-  //for (int i=0; i<spheres_num; i++) {
-  //  point3 pos(
-  //      (float) rnd(4.0f) - 2,
-  //      (float) rnd(4.0f) - 2,
-  //      (float) rnd(4.0f) - 2
-  //      );
-  //  float radius = (float) rnd(0.3f) + 0.1;
-  //  color c(
-  //      (float) rnd(1.0f),
-  //      (float) rnd(1.0f),
-  //      (float) rnd(1.0f)
-  //      );
-  //  sce.addShape(new Sphere(
-  //        pos,
-  //        radius,
-  //        c
-  //        )
-  //      );
-  //}
+  // Init Random scene
+  int spheres_num = 100;
+  srand( (unsigned)time(NULL) );
+  for (int i=0; i<spheres_num; i++) {
+    point3 pos(
+        (float) rnd(4.0f) - 2,
+        (float) rnd(4.0f) - 2,
+        (float) rnd(4.0f) - 2
+        );
+    float radius = (float) rnd(0.3f) + 0.1;
+    color c(
+        (float) rnd(1.0f),
+        (float) rnd(1.0f),
+        (float) rnd(1.0f)
+        );
+    sce.addShape(new Sphere(
+          pos,
+          radius,
+          c
+          )
+        );
+  }
 
   //sce.addShape(new Sphere(1, color(0.5, 0.8, 0.7)));
   //sce.addShape(new Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7)));
 
   //auto obj = Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
-  auto obj = Sphere(1, color(0.7, 0.7, 0.7));
+  ////auto obj = Sphere(1, color(0.7, 0.7, 0.7));
   ////obj.translate(vec3(0,1,-1));
   //obj.translate(vec3(0,0,-1));
   //obj.translate(vec3(0,0,-1));
   //obj.translate(vec3(-1,1,1));
   //obj.update();
-  sce.addShape(&obj);
+  ////sce.addShape(&obj);
+
+  //sce.addShape(new Sphere(point3(.5), .5, color(1,0,0)));
 
   sce.addLight(new PointLight(point3(5,4,3), color(1), 80));
   //sce.addLight(new PointLight(point3(5,4,3), color(1)));

@@ -3,5 +3,9 @@ rm -rf build main
 mkdir build
 cd build
 cmake -D CMAKE_CUDA_COMPILER=/opt/cuda/bin/nvcc ..
-make
+if [ "$1" == "-j" ]; then
+  make -j
+else
+  make
+fi
 cd ..

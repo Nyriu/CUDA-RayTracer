@@ -18,17 +18,17 @@ __device__ HitRecord Tracer::sphereTrace(const Ray *r, const Scene *sce) const {
   float t=0;
   float minDistance = infinity;
   float d = infinity;
-  Sphere *hit_shape = nullptr;
+  ImplicitShape *hit_shape = nullptr;
   while (t < max_distance_) {
     minDistance = infinity; // TODO REMOVEME
-    Sphere *sph = sce->getShapes();
+    ImplicitShape *shape = sce->getShapes();
     for (int i=0; i < sce->getShapesNum(); i++) {
-      d = sph->getDist(r->at(t));
+      d = shape->getDist(r->at(t));
       if (d < minDistance) {
         minDistance = d;
-        hit_shape = sph;
+        hit_shape = shape;
       }
-      sph++;
+      shape++;
     }
     // did we intersect the shape?
     if (minDistance < 0 ||  minDistance <= hit_threshold_ * t) {
@@ -44,7 +44,7 @@ __device__ color Tracer::shade(const HitRecord *ht, const Scene *sce) const {
   point3 p = ht->p_;
   vec3 v = ht->r_->dir_;
   vec3 n = ht->n_;
-  const Sphere *sph = ht->sphere_;
+  const ImplicitShape *shape = ht->shape_;
 
   color outRadiance(0);
 
@@ -56,7 +56,7 @@ __device__ color Tracer::shade(const HitRecord *ht, const Scene *sce) const {
   float dist2 = 0;
 
   // TODO "materials"
-  color cdiff = sph->getAlbedo();
+  color cdiff = shape->getAlbedo();
   //float shininess_factor = shape->getShininess(p);
   //Color cspec = shape->getSpecular(p);
   //color cdiff(.5,.3,.8);
