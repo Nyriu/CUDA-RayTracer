@@ -15,7 +15,8 @@
 
 * Obj istantiation on device with class hierarchies and vtable
 
-![](./imgs/2021-07-13-113501_512x512_scrot.png)
+![](./imgs/2021-07-13-224245_512x512_scrot.png)
+
 
 
 

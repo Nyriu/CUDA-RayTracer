@@ -5,7 +5,7 @@
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
 
-enum ShapeType { none, sphere, cube };
+enum ShapeType { none, sphere, cube, torus };
 class ImplicitShapeInfo {
   public:
     ShapeType shape_type = ShapeType::none;
@@ -17,12 +17,8 @@ class ImplicitShapeInfo {
     vec3 translations = vec3(0);
     vec3 rotations = vec3(0);
 
-    // Sphere stuff // TODO little ShapeInfo hierarchy here?
-    float radius = 0.5;
-
-    // Cube stuff // TODO little ShapeInfo hierarchy here?
-    //vec3 half_dims = vec3(.5);
-    float half_dim = .5;
+    float additional_0 = 0.5;
+    //float additional_1 = 0.25;
 
     __host__ __device__ ImplicitShapeInfo(
         const ShapeType& shape_type_i,
@@ -60,9 +56,11 @@ class ImplicitShapeInfo {
         rotations(rotations_i)
         {
           if (shape_type_i == ShapeType::sphere) {
-            radius = additional_i;
+            additional_0 = additional_i;
           } else if (shape_type_i == ShapeType::cube) {
-            half_dim = additional_i;
+            additional_0 = additional_i;
+          } else if (shape_type_i == ShapeType::torus) {
+            additional_0 = additional_i;
           } else {
             printf("\n\nAAAAAAAAAAA that's BAD!!!!\n\n");
           }
@@ -160,7 +158,7 @@ class Sphere : public ImplicitShape {
     }
     //Sphere(const point3& center, const float& radius) : center_(center), radius_(radius) {}
     __host__ __device__ Sphere(const ImplicitShapeInfo& isi) :
-      ImplicitShape(isi), radius_(isi.radius) {}
+      ImplicitShape(isi), radius_(isi.additional_0) {}
 
     __device__ float getDist(const point3& point) const override {
       //point3 p = point - center_; // very basic from world to local
@@ -207,7 +205,7 @@ class Cube : public ImplicitShape {
       update();
     }
     __host__ __device__ Cube(const ImplicitShapeInfo& isi) :
-      ImplicitShape(isi), half_dim_(isi.half_dim) {}
+      ImplicitShape(isi), half_dim_(isi.additional_0) {}
 
     __device__ float getDist(const point3& point) const override {
       point3 p = worldToLocalP(point);
@@ -235,7 +233,67 @@ class Cube : public ImplicitShape {
     }
 };
 
+class Torus : public ImplicitShape {
+  private:
+    float r0_=1; //, r1_=.2;
+    //float r0_r1_ratio_ = .3;
+  public:
+    //Torus(const float& r0, const float& r1) : r0_(r0), r1_(r1) {}
+    //Torus(const point3& center, const float& r0, const float& r1) : r0_(r0), r1_(r1) {
+    //  translate(center);
+    //  update();
+    //}
+    //Torus(const point3& center, const float& r0, const float& r1, const color& albedo) : r0_(r0), r1_(r1) {
+    //  translate(center);
+    //  cdiff_ = albedo;
+    //  update();
+    //}
+    Torus(const point3& center, const float& r0, const color& albedo) : r0_(r0) {
+      translate(center);
+      cdiff_ = albedo;
+      update();
+    }
 
+    __host__ __device__ Torus(const ImplicitShapeInfo& isi) :
+      ImplicitShape(isi), r0_(isi.additional_0) {}
+
+    __device__ float getDist(const point3& point) const override {
+      /// if (
+      ///     threadIdx.x + blockDim.x * blockIdx.x == 0 &&
+      ///     threadIdx.y + blockDim.y * blockIdx.y == 0
+      ///     ) {
+      ///   //printf("point = (%f,%f,%f)\n", point.x, point.y, point.z);
+      ///   printf("r0_ = %f r1_ = %f\n", r0_,r1_);
+      ///   //printf("r0_r1_ratio_ = %f\n", r0_r1_ratio_);
+      ///   //point3 p = worldToLocalP(point);
+      ///   //printf("p = (%f,%f,%f)\n", p.x, p.y, p.z);
+      ///   //printf("model : [\n %f,%f,%f,%f,\n %f,%f,%f,%f,\n %f,%f,%f,%f,\n %f,%f,%f,%f\n ]\n",
+      ///   //    model_[0][0], model_[1][0], model_[2][0], model_[3][0],
+      ///   //    model_[0][1], model_[1][1], model_[2][1], model_[3][1],
+      ///   //    model_[0][2], model_[1][2], model_[2][2], model_[3][2],
+      ///   //    model_[0][3], model_[1][3], model_[2][3], model_[3][3]
+      ///   //    );
+      ///   //printf("translations_ = (%f,%f,%f)\n", translations_.x, translations_.y, translations_.z);
+      /// }
+      /// return glm::length( worldToLocalP(point)) - r0_;
+
+      point3 p = worldToLocalP(point);
+      // to 2D plane
+      float tmpx = std::sqrt(p.x*p.x + p.z*p.z) - r0_;
+      float tmpy = p.y;
+      //return sqrtf(tmpx * tmpx + tmpy * tmpy) - r1_;
+      return sqrtf(tmpx * tmpx + tmpy * tmpy) - .09;
+    }
+
+    __host__ __device__ ImplicitShapeInfo get_info() const override {
+      return ImplicitShapeInfo(
+          ShapeType::torus,
+          cdiff_, cspec_, shininess_,
+          translations_, rotations_,
+          r0_
+          );
+    }
+};
 
 #endif
 

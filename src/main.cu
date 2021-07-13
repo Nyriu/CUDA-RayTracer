@@ -1,6 +1,7 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include <iostream>
+#include <chrono>
 
 #include <GLFW/glfw3.h>
 
@@ -37,7 +38,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 static __global__ void kernel(uchar4 *ptr,
     const Camera *cam,
     const Scene *sce,
-    const Tracer *trc
+    const Tracer *trc//, const float2 *AA_array, const int AA_array_len
     ) {
 
   // map from threadIdx/BlockIdx to pixel position
@@ -54,16 +55,18 @@ static __global__ void kernel(uchar4 *ptr,
   Ray r = cam->generate_ray(u,v);
   color c = trc->trace(&r, sce);
 
-  //int n_AA_rays = 10; // num of Anti-Aliasing rays
-  //for (int i=0; i<n_AA_rays; i++) {
-  //  // ROBA MOLTO BRUTTA SOLO PER TEST
-  //  Ray aar = cam->generate_ray(
-  //      (x + i/10.f) / ((float) IMG_W -1),
-  //      (y + i/10.f) / ((float) IMG_H -1)
-  //      );
-  //  c = color(0.5) * (c + trc->trace(&aar, sce));
-  //}
-  ////color c(0.2);
+  /// // TENTATIVO AA
+  ///for (int i=0; i<AA_array_len; i++) {
+  ///  Ray aar = cam->generate_ray(
+  ///      (x + .5 + AA_array[i].x) / ((float) IMG_W -1),
+  ///      (y + .5 + AA_array[i].y) / ((float) IMG_H -1)
+  ///      );
+  ///  c += trc->trace(&aar, sce);
+  ///}
+  ///c /= color(AA_array_len+1);
+  /// END // TENTATIVO AA
+
+  //color c(0.2);
 
 
   // accessing uchar4 vs unsigned char*
@@ -103,7 +106,46 @@ class Renderer {
           );
       Scene *devScePtr = sce->to_device();
 
-      kernel<<<grids,threads>>>(devPtr, devCamPtr, devScePtr, devTrcPtr);
+      /// TENTATIVO AA
+      /// int AA_array_len = 8;
+      /// size_t AA_array_size = sizeof(float2) * AA_array_len;
+      /// float2 *AA_array = (float2 *) malloc(AA_array_size);
+      /// float val = 0; //0.0000001;
+      /// AA_array[0] = make_float2(-val, -val);
+      /// AA_array[1] = make_float2(-val,  val);
+      /// AA_array[2] = make_float2( val, -val);
+      /// AA_array[3] = make_float2( val,  val);
+
+      /// AA_array[0+4] = make_float2(AA_array[0+4].x/2.f, AA_array[0+4].y/2.f);
+      /// AA_array[1+4] = make_float2(AA_array[1+4].x/2.f, AA_array[1+4].y/2.f);
+      /// AA_array[2+4] = make_float2(AA_array[2+4].x/2.f, AA_array[2+4].y/2.f);
+      /// AA_array[3+4] = make_float2(AA_array[3+4].x/2.f, AA_array[3+4].y/2.f);
+
+      /// float2 *dev_AA_array = nullptr;
+      /// HANDLE_ERROR( cudaMalloc((void**)&dev_AA_array, AA_array_size) );
+      /// HANDLE_ERROR(
+      ///     cudaMemcpy((void*)dev_AA_array, (void*)AA_array, AA_array_size, cudaMemcpyHostToDevice)
+      ///     );
+      /// END // TENTATIVO AA
+
+
+
+      // qua t0
+      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+      //std::cout <<
+      //  "generating frame num " <<
+      //  current_tick_ << "\n" << std::endl;
+
+      kernel<<<grids,threads>>>(devPtr, devCamPtr, devScePtr, devTrcPtr//,
+          //dev_AA_array, AA_array_len
+          );
+      HANDLE_ERROR(cudaDeviceSynchronize());
+      // qua t1
+      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+      // per calcolare quanto ha messo a fare il frame
+      std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
+      std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+
 
       HANDLE_ERROR(cudaFree((void*)devCamPtr));
       HANDLE_ERROR(cudaFree((void*)devScePtr));
@@ -186,6 +228,7 @@ int main() {
   // Init Random scene
   int n_obj = 100;
   srand( (unsigned)time(NULL) );
+  //srand( (unsigned) 1234 );
   for (int i=0; i<n_obj; i++) {
     point3 pos(
         (float) rnd(4.0f) - 2,
@@ -197,7 +240,9 @@ int main() {
         (float) rnd(1.0f),
         (float) rnd(1.0f)
         );
-    if ( (float) rnd(1.0f) > .5) {
+
+    float shape_prob = (float) rnd(1.0f);
+    if (shape_prob < 0.33) {
       float radius = (float) rnd(0.3f) + 0.1;
       sce.addShape(new Sphere(
             pos,
@@ -205,11 +250,24 @@ int main() {
             c
             )
           );
-    } else {
+    } else if (shape_prob < 0.66) {
       float half_dim = (float) rnd(0.3f) + 0.1;
       auto obj = new Cube(
           pos,
           half_dim,
+          c
+          );
+      obj->rotate(
+          (float) rnd(90.0f),
+          (float) rnd(90.0f),
+          (float) rnd(90.0f)
+          );
+      sce.addShape(obj);
+    } else {
+      float radius = (float) rnd(0.3f) + 0.1;
+      auto obj = new Torus(
+          pos,
+          radius,
           c
           );
       obj->rotate(
@@ -227,6 +285,7 @@ int main() {
   //auto obj = Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
   //auto obj = Sphere(1, color(0.7, 0.7, 0.7));
   //auto obj = Cube(1);
+  //auto obj = Torus(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
   ////obj.translate(vec3(0,1,-1));
   //obj.translate(vec3(0,0,-1));
   //obj.translate(vec3(0,0,-1));
@@ -245,6 +304,8 @@ int main() {
   sce.addAmbientLight(new AmbientLight());
 
   Renderer renderer;
+
+
   renderer.render(&cam, &sce, devPtr);
 
   HANDLE_ERROR(cudaDeviceSynchronize()); // helps with debugging!!

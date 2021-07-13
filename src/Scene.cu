@@ -45,6 +45,9 @@ static __global__ void copy_kernel(ImplicitShapeInfo *infos, int n_shapes) {
   } else if (isi_ptr->shape_type == ShapeType::cube) {
     //printf("(%d) we've got a cube!\n", x);
     sh_ptr = new Cube(*isi_ptr);
+  } else if (isi_ptr->shape_type == ShapeType::torus) {
+    //printf("(%d) we've got a torus!\n", x);
+    sh_ptr = new Torus(*isi_ptr);
   } else if (isi_ptr->shape_type == ShapeType::none) {
     //printf("(%d) we've got a none!\n", x);
     sh_ptr = new ImplicitShape(*isi_ptr);
