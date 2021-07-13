@@ -19,7 +19,6 @@ class Scene {
     AmbientLight* ambientLight_ = nullptr;
 
     Scene *devPtr_ = nullptr;
-    //ImplicitShape *devShapes_ = nullptr;
     int shapes_num_ = 0; // number of shapes
     Light *devLights_ = nullptr;
     int lights_num_ = 0; // number of lights
@@ -34,7 +33,7 @@ class Scene {
 
     __device__ __host__ bool hasAmbientLight() const { return ambientLight_ != nullptr; }
 
-    __device__ ImplicitShape* getShapes() const; // { return devShapes_; }
+    __device__ ImplicitShape* getShapes() const;
     __device__ int getShapesNum() const { return shapes_num_; }
     __device__ Light* getLights() const { return devLights_; }
     __device__ int getLightsNum() const { return lights_num_; }

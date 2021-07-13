@@ -11,33 +11,32 @@ using vec4 = glm::vec4;
 
 class SceneObject {
   protected:
-    mat4 model_; // local transformation matrix
-    mat4 model_inv_; // local transformation matrix inverse
+    mat4 model_     = mat4(1); // local transformation matrix
+    mat4 model_inv_ = mat4(1); // local transformation matrix inverse
 
-    vec3 translations_; // cumulative vector of tranlations
-    vec3 rotations_;    // cumulative vector of rotations (in degrees)
+    vec3 translations_ = vec3(0); // cumulative vector of tranlations
+    vec3 rotations_    = vec3(0);    // cumulative vector of rotations (in degrees)
 
-    vec3 speed_; // x,y,z movement done in one time tick
-    vec3 spin_;  // x,y,z deg of rotation done in one time tick
+    vec3 speed_ = vec3(0); // x,y,z movement done in one time tick
+    vec3 spin_  = vec3(0);  // x,y,z deg of rotation done in one time tick
 
     // TOOD implement parent and has_parent?
-    __host__ __device__ void init() {
-      model_         = mat4(1.0); // identity
-      model_inv_ = mat4(1.0); // identity
 
-      translations_ = vec3(0);
-      rotations_    = vec3(0);
+    //__host__ __device__ void init() {
+    //  model_         = mat4(1.0); // identity
+    //  model_inv_ = mat4(1.0); // identity
 
-      speed_ = vec3(0);
-      spin_  = vec3(0);
-    }
+    //  translations_ = vec3(0);
+    //  rotations_    = vec3(0);
+
+    //  speed_ = vec3(0);
+    //  spin_  = vec3(0);
+    //}
     __host__ __device__ void update_model();
     __host__ __device__ void update_model_inv();
 
-    //__host__ __device__ SceneObject(con  robe qua);
-
   public:
-    __host__ __device__ SceneObject() { init(); }
+    //__host__ __device__ SceneObject() { init(); }
     __host__ __device__ vec3   localToWorld (const vec3& target, const bool as_point) const;
     __host__ __device__ vec3   localToWorldV(const vec3& target) const;
     __device__ point3 localToWorldP(const point3& target) const;

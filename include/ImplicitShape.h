@@ -78,12 +78,6 @@ class ImplicitShape : public SceneObject {
 
     static constexpr float gradient_delta_ = 10e-5; // delta used to compute gradient (normal)
 
-    __host__ __device__ void init() { // TODO remove all inits because can do the same with init list
-      SceneObject::init(); // TODO remove all inits because can do the same with init list
-      cdiff_ = color(0.5);
-      cspec_ = color(0.5);
-      shininess_ = 2;
-    }
   public:
     __host__ __device__ ImplicitShape() = default;
     __host__ __device__ ImplicitShape(const ImplicitShapeInfo& isi) :
@@ -154,19 +148,12 @@ class Sphere : public ImplicitShape {
 
     //static constexpr float gradient_delta_ = 10e-5; // delta used to compute gradient (normal)
 
-    void init() {
-      ImplicitShape::init();
-    }
   public:
-    Sphere(const float& radius) : radius_(radius) {
-      init();
-    }
+    Sphere(const float& radius) : radius_(radius) {}
     Sphere(const float& radius, const color& albedo) : radius_(radius) {
-      init();
       cdiff_ = albedo;
     }
     Sphere(const point3& center, const float& radius, const color& albedo) : radius_(radius) {
-      init();
       translate(center);
       cdiff_ = albedo;
       update();
@@ -212,16 +199,9 @@ class Sphere : public ImplicitShape {
 class Cube : public ImplicitShape {
   private:
     float half_dim_ = .5;
-
-    void init() {
-      //ImplicitShape::init(); // TODO
-    }
   public:
-    Cube(const float& half_dim) : half_dim_(half_dim) {
-      init();
-    }
+    Cube(const float& half_dim) : half_dim_(half_dim) {}
     Cube(const point3& center, const float& half_dim, const color& albedo) : half_dim_(half_dim) {
-      init();
       translate(center);
       cdiff_ = albedo;
       update();
