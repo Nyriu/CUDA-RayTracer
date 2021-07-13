@@ -42,6 +42,9 @@ static __global__ void copy_kernel(ImplicitShapeInfo *infos, int n_shapes) {
   if (isi_ptr->shape_type == ShapeType::sphere) {
     //printf("(%d) we've got a sphere!\n", x);
     sh_ptr = new Sphere(*isi_ptr);
+  } else if (isi_ptr->shape_type == ShapeType::cube) {
+    //printf("(%d) we've got a cube!\n", x);
+    sh_ptr = new Cube(*isi_ptr);
   } else if (isi_ptr->shape_type == ShapeType::none) {
     //printf("(%d) we've got a none!\n", x);
     sh_ptr = new ImplicitShape(*isi_ptr);
@@ -52,8 +55,6 @@ static __global__ void copy_kernel(ImplicitShapeInfo *infos, int n_shapes) {
 }
 
 __device__ ImplicitShape* Scene::getShapes() const { return d_shapes; }
-
-
 
 
 __host__ void Scene::shapes_to_device() {
@@ -77,54 +78,6 @@ __host__ void Scene::shapes_to_device() {
   free(infos);
   copy_kernel<<<1,shapes_.size()>>>(dev_infos, shapes_.size());
   HANDLE_ERROR(cudaDeviceSynchronize());
-  //std::cout << "here" <<  std::endl;
-  //std::cout << devShapes_ <<  std::endl;
-  //std::cout << d_shapes <<  std::endl;
-  //std::cout << sizeof(d_shapes) <<  std::endl;
-  //HANDLE_ERROR(
-  //    cudaMemcpy((void*)devShapes_, (void*)d_shapes, sizeof(&devShapes_), cudaMemcpyDeviceToHost)
-  //    );
-  //std::cout << "after here" <<  std::endl;
-
-  /// OLD STUFF BELOW
-  /// PROBABLY REMOVE ALL
-  /// /// DEBUG
-  /// std::cout << 
-  ///   "\nsizeof(SceneObject) = " << sizeof(SceneObject) << 
-  ///   "\nsizeof(ImplicitShape) = " << sizeof(ImplicitShape) << 
-  ///   "\nsizeof(Sphere) = " << sizeof(Sphere) << 
-  ///   std::endl;
-  /// /// END /// DEBUG
-
-
-  /// size_t total_size = 0;
-  /// for (const ImplicitShape *shape : shapes_) {
-  ///   total_size += sizeof(*shape);
-  ///   std::cout << 
-  ///     "\nsizeof(shape) = " << sizeof(*shape) << 
-  ///     std::endl;
-  /// }
-  /// // Static allocation on device memory
-  /// HANDLE_ERROR(
-  ///     cudaMalloc((void**)&devShapes_, total_size)
-  ///     );
-
-  /// int offset = 0;
-  /// for (const ImplicitShape *shape : shapes_) {
-  ///   // Copy from host to device
-  ///   HANDLE_ERROR(
-  ///       cudaMemcpy((void*)(devShapes_+offset), (void*)shape, sizeof(*shape), cudaMemcpyHostToDevice)
-  ///       );
-  ///   offset++;
-  /// }
-
-  /// if (offset != shapes_num_) {
-  ///   std::cout << "ERROR"
-  ///     "offset = " << offset <<
-  ///     "shapes_num_ = " << shapes_num_ <<
-  ///     std::endl;
-  ///   exit(1);
-  /// }
 }
 
 __host__ void Scene::lights_to_device() {

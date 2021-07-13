@@ -49,10 +49,21 @@ static __global__ void kernel(uchar4 *ptr,
   // Put coords in [0,1]
   float u = (x + .5) / ((float) IMG_W -1); // NDC Coord
   float v = (y + .5) / ((float) IMG_H -1); // NDC Coord
-  Ray r = cam->generate_ray(u,v);
 
+  // base color
+  Ray r = cam->generate_ray(u,v);
   color c = trc->trace(&r, sce);
-  //color c(0.2);
+
+  //int n_AA_rays = 10; // num of Anti-Aliasing rays
+  //for (int i=0; i<n_AA_rays; i++) {
+  //  // ROBA MOLTO BRUTTA SOLO PER TEST
+  //  Ray aar = cam->generate_ray(
+  //      (x + i/10.f) / ((float) IMG_W -1),
+  //      (y + i/10.f) / ((float) IMG_H -1)
+  //      );
+  //  c = color(0.5) * (c + trc->trace(&aar, sce));
+  //}
+  ////color c(0.2);
 
 
   // accessing uchar4 vs unsigned char*
@@ -173,39 +184,56 @@ int main() {
   Scene sce;
 
   // Init Random scene
-  int spheres_num = 100;
+  int n_obj = 100;
   srand( (unsigned)time(NULL) );
-  for (int i=0; i<spheres_num; i++) {
+  for (int i=0; i<n_obj; i++) {
     point3 pos(
         (float) rnd(4.0f) - 2,
         (float) rnd(4.0f) - 2,
         (float) rnd(4.0f) - 2
         );
-    float radius = (float) rnd(0.3f) + 0.1;
     color c(
         (float) rnd(1.0f),
         (float) rnd(1.0f),
         (float) rnd(1.0f)
         );
-    sce.addShape(new Sphere(
+    if ( (float) rnd(1.0f) > .5) {
+      float radius = (float) rnd(0.3f) + 0.1;
+      sce.addShape(new Sphere(
+            pos,
+            radius,
+            c
+            )
+          );
+    } else {
+      float half_dim = (float) rnd(0.3f) + 0.1;
+      auto obj = new Cube(
           pos,
-          radius,
+          half_dim,
           c
-          )
-        );
+          );
+      obj->rotate(
+          (float) rnd(90.0f),
+          (float) rnd(90.0f),
+          (float) rnd(90.0f)
+          );
+      sce.addShape(obj);
+    }
   }
 
   //sce.addShape(new Sphere(1, color(0.5, 0.8, 0.7)));
   //sce.addShape(new Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7)));
 
   //auto obj = Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
-  ////auto obj = Sphere(1, color(0.7, 0.7, 0.7));
+  //auto obj = Sphere(1, color(0.7, 0.7, 0.7));
+  //auto obj = Cube(1);
   ////obj.translate(vec3(0,1,-1));
   //obj.translate(vec3(0,0,-1));
   //obj.translate(vec3(0,0,-1));
   //obj.translate(vec3(-1,1,1));
+  //obj.rotate(vec3(45));
   //obj.update();
-  ////sce.addShape(&obj);
+  //sce.addShape(&obj);
 
   //sce.addShape(new Sphere(point3(.5), .5, color(1,0,0)));
 

@@ -2,8 +2,10 @@
 #define IMPLICIT_SHAPE_H
 
 #include "SceneObject.h"
+#include <glm/common.hpp>
+#include <glm/geometric.hpp>
 
-enum ShapeType { none, sphere };
+enum ShapeType { none, sphere, cube };
 class ImplicitShapeInfo {
   public:
     ShapeType shape_type = ShapeType::none;
@@ -18,6 +20,9 @@ class ImplicitShapeInfo {
     // Sphere stuff // TODO little ShapeInfo hierarchy here?
     float radius = 0.5;
 
+    // Cube stuff // TODO little ShapeInfo hierarchy here?
+    //vec3 half_dims = vec3(.5);
+    float half_dim = .5;
 
     __host__ __device__ ImplicitShapeInfo(
         const ShapeType& shape_type_i,
@@ -45,17 +50,20 @@ class ImplicitShapeInfo {
         const vec3& translations_i,
         const vec3& rotations_i,
 
-        const float radius_i
+        const float additional_i
         ) :
         shape_type(shape_type_i), 
         cdiff(cdiff_i),
         cspec(cspec_i),
         shininess(shininess_i),
         translations(translations_i),
-        rotations(rotations_i),
-        radius(radius_i) {
-          if (shape_type_i != ShapeType::sphere) {
-            //TODO throw error
+        rotations(rotations_i)
+        {
+          if (shape_type_i == ShapeType::sphere) {
+            radius = additional_i;
+          } else if (shape_type_i == ShapeType::cube) {
+            half_dim = additional_i;
+          } else {
             printf("\n\nAAAAAAAAAAA that's BAD!!!!\n\n");
           }
         }
@@ -199,6 +207,55 @@ class Sphere : public ImplicitShape {
           );
     }
 };
+
+
+class Cube : public ImplicitShape {
+  private:
+    float half_dim_ = .5;
+
+    void init() {
+      //ImplicitShape::init(); // TODO
+    }
+  public:
+    Cube(const float& half_dim) : half_dim_(half_dim) {
+      init();
+    }
+    Cube(const point3& center, const float& half_dim, const color& albedo) : half_dim_(half_dim) {
+      init();
+      translate(center);
+      cdiff_ = albedo;
+      update();
+    }
+    __host__ __device__ Cube(const ImplicitShapeInfo& isi) :
+      ImplicitShape(isi), half_dim_(isi.half_dim) {}
+
+    __device__ float getDist(const point3& point) const override {
+      point3 p = worldToLocalP(point);
+      point3 abs_p = glm::abs(p);
+
+      vec3 v = abs_p - vec3(half_dim_);
+      float d = glm::length(
+          glm::max(v, vec3(0))
+            );
+          //vec3(
+          //  max(v.x,.0f),
+          //  max(v.y,.0f),
+          //  max(v.z,.0f)
+          //  ));
+      return d;
+    }
+
+    __host__ __device__ ImplicitShapeInfo get_info() const override {
+      return ImplicitShapeInfo(
+          ShapeType::cube,
+          cdiff_, cspec_, shininess_,
+          translations_, rotations_,
+          half_dim_
+          );
+    }
+};
+
+
 
 #endif
 
