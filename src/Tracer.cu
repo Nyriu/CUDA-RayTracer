@@ -57,11 +57,11 @@ __device__ color Tracer::shade(const HitRecord *ht, const Scene *sce) const {
 
   // TODO "materials"
   color cdiff = shape->getAlbedo();
-  //float shininess_factor = shape->getShininess(p);
-  //Color cspec = shape->getSpecular(p);
-  //color cdiff(.5,.3,.8);
-  float shininess_factor = 2;
-  color cspec(0.04);
+  float shininess_factor = shape->getShininess(p);
+  color cspec = shape->getSpecular(p);
+  ////color cdiff(.5,.3,.8);
+  //float shininess_factor = 2;
+  //color cspec(0.04);
 
   if (sce->getLightsNum() > 0) {
     Light *lgt = sce->getLights();
@@ -82,7 +82,7 @@ __device__ color Tracer::shade(const HitRecord *ht, const Scene *sce) const {
         // With shadows below
         Ray shadowRay(p,l);
         shadow = sphereTraceShadow(&shadowRay, shape, sce);
-        //shadow = false; // TODO trace shadow
+        //shadow = false; // TODO
         color lightColor = lgt->getColor();
         color lightIntensity = lgt->getIntensity();
 

@@ -10,8 +10,8 @@ class ImplicitShapeInfo {
   public:
     ShapeType shape_type = ShapeType::none;
 
-    color cdiff = color(0.5);
-    color cspec = color(0.5);
+    color cdiff     = color(0.5);
+    color cspec     = color(0.04);
     float shininess = 2;
 
     vec3 translations = vec3(0);
@@ -70,14 +70,18 @@ class ImplicitShapeInfo {
 
 class ImplicitShape : public SceneObject {
   protected:
-    color cdiff_ = color(0.5);
-    color cspec_ = color(0.5);
+    color cdiff_     = color(0.5);
+    color cspec_     = color(0.04);
     float shininess_ = 2;
+
 
     static constexpr float gradient_delta_ = 10e-5; // delta used to compute gradient (normal)
 
   public:
     __host__ __device__ ImplicitShape() = default;
+    __host__ __device__ ImplicitShape(const color& albedo) : cdiff_(albedo) {}
+    __host__ __device__ ImplicitShape(const color& albedo, const color& spec, float shininess) : 
+      cdiff_(albedo), cspec_(spec), shininess_(shininess) {}
     __host__ __device__ ImplicitShape(const ImplicitShapeInfo& isi) :
       SceneObject(),
       cdiff_(isi.cdiff),
@@ -148,14 +152,19 @@ class Sphere : public ImplicitShape {
 
   public:
     Sphere(const float& radius) : radius_(radius) {}
-    Sphere(const float& radius, const color& albedo) : radius_(radius) {
-      cdiff_ = albedo;
-    }
-    Sphere(const point3& center, const float& radius, const color& albedo) : radius_(radius) {
-      translate(center);
-      cdiff_ = albedo;
-      update();
-    }
+    Sphere(const float& radius, const color& albedo) : ImplicitShape(albedo), radius_(radius) {}
+    Sphere(const point3& center, const float& radius, const color& albedo) :
+      ImplicitShape(albedo), radius_(radius) {
+        translate(center);
+        update();
+      }
+    __host__ __device__ Sphere(
+        const point3& center, const float& radius,
+        const color& albedo, const color& spec, float shininess) : 
+      ImplicitShape(albedo, spec, shininess), radius_(radius) {
+        translate(center);
+        update();
+      }
     //Sphere(const point3& center, const float& radius) : center_(center), radius_(radius) {}
     __host__ __device__ Sphere(const ImplicitShapeInfo& isi) :
       ImplicitShape(isi), radius_(isi.additional_0) {}
@@ -199,11 +208,18 @@ class Cube : public ImplicitShape {
     float half_dim_ = .5;
   public:
     Cube(const float& half_dim) : half_dim_(half_dim) {}
-    Cube(const point3& center, const float& half_dim, const color& albedo) : half_dim_(half_dim) {
-      translate(center);
-      cdiff_ = albedo;
-      update();
-    }
+    Cube(const point3& center, const float& half_dim, const color& albedo) :
+      ImplicitShape(albedo), half_dim_(half_dim) {
+        translate(center);
+        update();
+      }
+    __host__ __device__ Cube(
+        const point3& center, const float& half_dim,
+        const color& albedo, const color& spec, float shininess) : 
+      ImplicitShape(albedo, spec, shininess), half_dim_(half_dim) {
+        translate(center);
+        update();
+      }
     __host__ __device__ Cube(const ImplicitShapeInfo& isi) :
       ImplicitShape(isi), half_dim_(isi.additional_0) {}
 
@@ -239,11 +255,18 @@ class Torus : public ImplicitShape {
     //  cdiff_ = albedo;
     //  update();
     //}
-    Torus(const point3& center, const float& r0, const color& albedo) : r0_(r0) {
-      translate(center);
-      cdiff_ = albedo;
-      update();
-    }
+    Torus(const point3& center, const float& r0, const color& albedo) :
+      ImplicitShape(albedo), r0_(r0) {
+        translate(center);
+        update();
+      }
+    __host__ __device__ Torus(
+        const point3& center, const float& r0,
+        const color& albedo, const color& spec, float shininess) : 
+      ImplicitShape(albedo, spec, shininess), r0_(r0) {
+        translate(center);
+        update();
+      }
 
     __host__ __device__ Torus(const ImplicitShapeInfo& isi) :
       ImplicitShape(isi), r0_(isi.additional_0) {}

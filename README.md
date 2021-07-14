@@ -15,8 +15,14 @@
 
 ![](./imgs/2021-07-13-224245_512x512_scrot.png)
 
-* Shadows
+* Shadows (and better cubes)
 
 ![](./imgs/2021-07-14-112354_512x512_scrot.png)
+
+* Specular
+
+![](./imgs/2021-07-14-124423_512x512_scrot.png)
+
+
 
 

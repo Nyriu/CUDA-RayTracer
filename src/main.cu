@@ -225,19 +225,33 @@ int main() {
 
   // Init Random scene
   int n_obj = 100;
-  srand( (unsigned)time(NULL) );
-  //srand( (unsigned) 12345 );
+  //srand( (unsigned)time(NULL) );
+  srand( (unsigned) 12345 );
   for (int i=0; i<n_obj; i++) {
     point3 pos(
         (float) rnd(4.0f) - 2,
         (float) rnd(4.0f) - 2,
         (float) rnd(4.0f) - 2
         );
-    color c(
+    color alb(
         (float) rnd(1.0f),
         (float) rnd(1.0f),
-        (float) rnd(1.0f)
-        );
+        (float) rnd(1.0f));
+    //float min_spec = 0.04f;
+    //float max_spec = 0.2f;
+    color spec(
+        //(float) rnd(min_spec + max_spec) - (min_spec+max_spec)/2,
+        //(float) rnd(min_spec + max_spec) - (min_spec+max_spec)/2,
+        //(float) rnd(min_spec + max_spec) - (min_spec+max_spec)/2);
+        0.04);
+        //0.2);
+        //.913,.922,.924);
+    float shininess = 2; // 70; // (float) rnd(60.0f);
+
+    printf("alb  = (%f,%f,%f)\n", alb.x, alb.y, alb.z);
+    printf("spec = (%f,%f,%f)\n", spec.x, spec.y, spec.z);
+    printf("shin = %f\n", shininess);
+
 
     float shape_prob = (float) rnd(1.0f);
     if (shape_prob < 0.33) {
@@ -245,7 +259,9 @@ int main() {
       sce.addShape(new Sphere(
             pos,
             radius,
-            c
+            alb,
+            spec,
+            shininess
             )
           );
     } else if (shape_prob < 0.66) {
@@ -253,7 +269,9 @@ int main() {
       auto obj = new Cube(
           pos,
           half_dim,
-          c
+          alb,
+          spec,
+          shininess
           );
       obj->rotate(
           (float) rnd(90.0f),
@@ -266,7 +284,9 @@ int main() {
       auto obj = new Torus(
           pos,
           radius,
-          c
+          alb,
+          spec,
+          shininess
           );
       obj->rotate(
           (float) rnd(90.0f),
