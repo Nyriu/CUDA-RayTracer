@@ -86,8 +86,7 @@ class Tracer {
     __device__ HitRecord sphereTrace(const Ray *r, const Scene *sce) const;
     __device__ color shade(const HitRecord *ht, const Scene *sce) const;
 
-    // TODO
-    //  bool sphereTraceShadow(const Ray& r, const ImplicitShape *shapeToShadow);
+    __device__ bool sphereTraceShadow(const Ray *r, const ImplicitShape *shapeToShadow, const Scene *sce) const;
 };
 
 #endif

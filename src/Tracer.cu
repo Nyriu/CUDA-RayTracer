@@ -80,8 +80,9 @@ __device__ color Tracer::shade(const HitRecord *ht, const Scene *sce) const {
           cspec * powf(vDotr, shininess_factor);
 
         // With shadows below
-        //shadow = sphereTraceShadow(Ray(p,lightDir), shape);
-        shadow = false; // TODO trace shadow
+        Ray shadowRay(p,l);
+        shadow = sphereTraceShadow(&shadowRay, shape, sce);
+        //shadow = false; // TODO trace shadow
         color lightColor = lgt->getColor();
         color lightIntensity = lgt->getIntensity();
 
@@ -100,3 +101,37 @@ __device__ color Tracer::shade(const HitRecord *ht, const Scene *sce) const {
 }
 
 
+__device__ bool Tracer::sphereTraceShadow(const Ray *r, const ImplicitShape *shapeToShadow, const Scene *sce) const {
+  if (sce->getShapesNum() <= 0) return false;
+
+  float t=0;
+  float minDistance = infinity;
+  float d = infinity;
+  point3 from = r->at(t);
+  while (t < max_distance_) {
+    minDistance = infinity; // TODO REMOVEME
+    ImplicitShape *shape = sce->getShapes();
+    for (int i=0; i < sce->getShapesNum(); i++) {
+      from = r->at(t);
+      d = shape->getDist(from);
+
+      // Self-Hit Shadowing Error Solution
+      if (shape == shapeToShadow && d <= hit_threshold_ * t) {
+        // move "from" a bit over the surface (along the normal direction)
+        d = shape->getDist(
+            from + shape->getNormalAt(from) * vec3(10e-7)
+            );
+      }
+
+      if (d < minDistance) {
+        minDistance = d;
+        if (minDistance < 0 ||  minDistance <= hit_threshold_ * t) {
+          return true;
+        }
+      }
+      shape++;
+    }
+    t += minDistance;
+  }
+  return false;
+}

@@ -28,8 +28,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 // Globals
 #define IMG_H 512
 #define IMG_W 512
-//#define IMG_H 64
-//#define IMG_W 64
 
 // TODO
 //#define IMG_H 1080
@@ -228,7 +226,7 @@ int main() {
   // Init Random scene
   int n_obj = 100;
   srand( (unsigned)time(NULL) );
-  //srand( (unsigned) 1234 );
+  //srand( (unsigned) 12345 );
   for (int i=0; i<n_obj; i++) {
     point3 pos(
         (float) rnd(4.0f) - 2,

@@ -1,6 +1,5 @@
 # Sphere Tracing with Graphics Interoperability
 
-### Sphere Tracing + Shading
 * init from <https://github.com/Nyriu/Esercizi_Esempi_CUDA/tree/main/06_rt_graphics_interop>
 * Background colored with ray directions
 
@@ -16,6 +15,8 @@
 
 ![](./imgs/2021-07-13-224245_512x512_scrot.png)
 
+* Shadows
 
+![](./imgs/2021-07-14-112354_512x512_scrot.png)
 
 

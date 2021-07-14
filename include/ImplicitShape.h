@@ -209,18 +209,9 @@ class Cube : public ImplicitShape {
 
     __device__ float getDist(const point3& point) const override {
       point3 p = worldToLocalP(point);
-      point3 abs_p = glm::abs(p);
-
-      vec3 v = abs_p - vec3(half_dim_);
-      float d = glm::length(
-          glm::max(v, vec3(0))
-            );
-          //vec3(
-          //  max(v.x,.0f),
-          //  max(v.y,.0f),
-          //  max(v.z,.0f)
-          //  ));
-      return d;
+      point3 q = glm::abs(p) - vec3(half_dim_);
+      return glm::length(glm::max(q,vec3(0.0))) +
+        min(glm::max(q.x, glm::max(q.y,q.z)), 0.0);
     }
 
     __host__ __device__ ImplicitShapeInfo get_info() const override {
@@ -258,25 +249,6 @@ class Torus : public ImplicitShape {
       ImplicitShape(isi), r0_(isi.additional_0) {}
 
     __device__ float getDist(const point3& point) const override {
-      /// if (
-      ///     threadIdx.x + blockDim.x * blockIdx.x == 0 &&
-      ///     threadIdx.y + blockDim.y * blockIdx.y == 0
-      ///     ) {
-      ///   //printf("point = (%f,%f,%f)\n", point.x, point.y, point.z);
-      ///   printf("r0_ = %f r1_ = %f\n", r0_,r1_);
-      ///   //printf("r0_r1_ratio_ = %f\n", r0_r1_ratio_);
-      ///   //point3 p = worldToLocalP(point);
-      ///   //printf("p = (%f,%f,%f)\n", p.x, p.y, p.z);
-      ///   //printf("model : [\n %f,%f,%f,%f,\n %f,%f,%f,%f,\n %f,%f,%f,%f,\n %f,%f,%f,%f\n ]\n",
-      ///   //    model_[0][0], model_[1][0], model_[2][0], model_[3][0],
-      ///   //    model_[0][1], model_[1][1], model_[2][1], model_[3][1],
-      ///   //    model_[0][2], model_[1][2], model_[2][2], model_[3][2],
-      ///   //    model_[0][3], model_[1][3], model_[2][3], model_[3][3]
-      ///   //    );
-      ///   //printf("translations_ = (%f,%f,%f)\n", translations_.x, translations_.y, translations_.z);
-      /// }
-      /// return glm::length( worldToLocalP(point)) - r0_;
-
       point3 p = worldToLocalP(point);
       // to 2D plane
       float tmpx = std::sqrt(p.x*p.x + p.z*p.z) - r0_;
