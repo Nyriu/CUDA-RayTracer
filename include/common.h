@@ -10,6 +10,15 @@
 //#include <glm/geometric.hpp>
 
 
+// Globals
+#define IMG_H 512
+#define IMG_W 512
+
+// TODO
+//#define IMG_H 1080
+//#define IMG_W IMG_H*16/9;
+
+
 static void HandleError( cudaError_t err, const char *file, int line) {
   if (err != cudaSuccess) {
     std::cout << "Error Name: " << cudaGetErrorName( err ) << std::endl;

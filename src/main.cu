@@ -1,7 +1,6 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include <iostream>
-#include <chrono>
 
 #include <GLFW/glfw3.h>
 
@@ -17,151 +16,25 @@
 #include "Ray.h"
 #include "Camera.h"
 #include "Tracer.h"
+#include "Renderer.h"
 
 
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+  // Press ESC to close the window
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
-
-// Globals
-#define IMG_H 512
-#define IMG_W 512
-
-// TODO
-//#define IMG_H 1080
-//#define IMG_W IMG_H*16/9;
-
-static __global__ void kernel(uchar4 *ptr,
-    const Camera *cam,
-    const Scene *sce,
-    const Tracer *trc//, const float2 *AA_array, const int AA_array_len
-    ) {
-
-  // map from threadIdx/BlockIdx to pixel position
-  int x = threadIdx.x + blockIdx.x * blockDim.x;
-  int y = threadIdx.y + blockIdx.y * blockDim.y;
-  int offset = x + y * blockDim.x * gridDim.x;
-
-  // in img coord (0,0) is bottom-left
-  // Put coords in [0,1]
-  float u = (x + .5) / ((float) IMG_W -1); // NDC Coord
-  float v = (y + .5) / ((float) IMG_H -1); // NDC Coord
-
-  // base color
-  Ray r = cam->generate_ray(u,v);
-  color c = trc->trace(&r, sce);
-
-  /// // TENTATIVO AA
-  ///for (int i=0; i<AA_array_len; i++) {
-  ///  Ray aar = cam->generate_ray(
-  ///      (x + .5 + AA_array[i].x) / ((float) IMG_W -1),
-  ///      (y + .5 + AA_array[i].y) / ((float) IMG_H -1)
-  ///      );
-  ///  c += trc->trace(&aar, sce);
-  ///}
-  ///c /= color(AA_array_len+1);
-  /// END // TENTATIVO AA
-
-  //color c(0.2);
-
-
-  // accessing uchar4 vs unsigned char*
-  ptr[offset].x = (int) (255 * c.r); // (int) (u * 255); //0;
-  ptr[offset].y = (int) (255 * c.g); // (int) (v * 255); //(int)255/2;
-  ptr[offset].z = (int) (255 * c.b); // 0;
-  ptr[offset].w = 255;
-}
-
-class Renderer {
-  private:
-    Tracer *tracer_;
-  public:
-    __host__ void render(
-        Camera *cam,
-        Scene *sce,
-        uchar4 *devPtr) {
-      // --- Generate One Frame ---
-      // TODO dims
-      dim3 grids(IMG_W/16, IMG_H/16);
-      dim3 threads(16,16);
-      //dim3 grids(IMG_W, IMG_H);
-      //dim3 threads(1);
-      //float grids = 1;
-      //dim3 threads(IMG_W, IMG_H);
-
-      Camera *devCamPtr = nullptr;
-      Tracer *devTrcPtr = nullptr; // TODO
-
-      // Static allocation on device memory
-      HANDLE_ERROR(
-          cudaMalloc((void**)&devCamPtr, sizeof(Camera))
-          );
-      // Copy from host to device
-      HANDLE_ERROR(
-          cudaMemcpy((void*)devCamPtr, (void*)cam, sizeof(Camera), cudaMemcpyHostToDevice)
-          );
-      Scene *devScePtr = sce->to_device();
-
-      /// TENTATIVO AA
-      /// int AA_array_len = 8;
-      /// size_t AA_array_size = sizeof(float2) * AA_array_len;
-      /// float2 *AA_array = (float2 *) malloc(AA_array_size);
-      /// float val = 0; //0.0000001;
-      /// AA_array[0] = make_float2(-val, -val);
-      /// AA_array[1] = make_float2(-val,  val);
-      /// AA_array[2] = make_float2( val, -val);
-      /// AA_array[3] = make_float2( val,  val);
-
-      /// AA_array[0+4] = make_float2(AA_array[0+4].x/2.f, AA_array[0+4].y/2.f);
-      /// AA_array[1+4] = make_float2(AA_array[1+4].x/2.f, AA_array[1+4].y/2.f);
-      /// AA_array[2+4] = make_float2(AA_array[2+4].x/2.f, AA_array[2+4].y/2.f);
-      /// AA_array[3+4] = make_float2(AA_array[3+4].x/2.f, AA_array[3+4].y/2.f);
-
-      /// float2 *dev_AA_array = nullptr;
-      /// HANDLE_ERROR( cudaMalloc((void**)&dev_AA_array, AA_array_size) );
-      /// HANDLE_ERROR(
-      ///     cudaMemcpy((void*)dev_AA_array, (void*)AA_array, AA_array_size, cudaMemcpyHostToDevice)
-      ///     );
-      /// END // TENTATIVO AA
-
-
-
-      // qua t0
-      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-      //std::cout <<
-      //  "generating frame num " <<
-      //  current_tick_ << "\n" << std::endl;
-
-      kernel<<<grids,threads>>>(devPtr, devCamPtr, devScePtr, devTrcPtr//,
-          //dev_AA_array, AA_array_len
-          );
-      HANDLE_ERROR(cudaDeviceSynchronize());
-      // qua t1
-      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-      // per calcolare quanto ha messo a fare il frame
-      std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
-      std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
-
-
-      HANDLE_ERROR(cudaFree((void*)devCamPtr));
-      HANDLE_ERROR(cudaFree((void*)devScePtr));
-      HANDLE_ERROR(cudaFree((void*)devTrcPtr));
-    }
-  private:
-    // TODO far funzionare qua
-    //static __global__ void kernel(uchar4 *ptr) {
-};
-
 
 
 GLuint bufferObj;
 cudaGraphicsResource *resource;
 
-
-
-int main() {
+void device_setup(
+    // input
+    // output
+	  GLFWwindow **window,
+    uchar4 **devPtr
+    ) {
   cudaDeviceProp prop;
   int dev;
 
@@ -178,18 +51,12 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	GLFWwindow* window;
-	window = glfwCreateWindow(IMG_W, IMG_H, "GLFW Window", NULL, NULL);
+	*window = glfwCreateWindow(IMG_W, IMG_H, "GLFW Window", NULL, NULL);
 	if (!window) exit(EXIT_FAILURE);
+  glfwSetKeyCallback(*window, key_callback);
 
-  glfwSetKeyCallback(window, key_callback);
-
-	glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(*window);
 	glfwSwapInterval(1);
-
-
-  std::cout << glGetString(GL_VENDOR) << std::endl;
-  std::cout << glGetString(GL_RENDERER) << std::endl;
 
   // TODO ARB or not ARB
 	//glGenBuffers(1, &pbo);
@@ -206,27 +73,43 @@ int main() {
         cudaGraphicsMapFlagsNone
         )
       );
-
-  uchar4* devPtr;
   size_t size;
   HANDLE_ERROR(
       cudaGraphicsMapResources(1, &resource, NULL)
       );
   HANDLE_ERROR(
       cudaGraphicsResourceGetMappedPointer(
-        (void**)&devPtr,
+        (void**)devPtr,
         &size,
         resource
         )
       );
+}
 
-  Camera cam;
-  Scene sce;
+void device_terminate() {
+  // Terminate
+  HANDLE_ERROR(
+      cudaGraphicsUnmapResources(1, &resource, NULL)
+      );
+  HANDLE_ERROR(
+      cudaGraphicsUnregisterResource(resource)
+      );
+  glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+  glDeleteBuffers(1, &bufferObj);
 
+  glfwTerminate();
+}
+
+
+void scene_setup(
+    // input
+    // output
+    Scene& sce
+    ) {
   // Init Random scene
   int n_obj = 100;
-  //srand( (unsigned)time(NULL) );
-  srand( (unsigned) 12345 );
+  srand( (unsigned)time(NULL) );
+  //srand( (unsigned) 12345 );
   for (int i=0; i<n_obj; i++) {
     point3 pos(
         (float) rnd(4.0f) - 2,
@@ -243,15 +126,14 @@ int main() {
         //(float) rnd(min_spec + max_spec) - (min_spec+max_spec)/2,
         //(float) rnd(min_spec + max_spec) - (min_spec+max_spec)/2,
         //(float) rnd(min_spec + max_spec) - (min_spec+max_spec)/2);
-        0.04);
-        //0.2);
-        //.913,.922,.924);
+      0.04);
+    //0.2);
+    //.913,.922,.924);
     float shininess = 2; // 70; // (float) rnd(60.0f);
 
-    printf("alb  = (%f,%f,%f)\n", alb.x, alb.y, alb.z);
-    printf("spec = (%f,%f,%f)\n", spec.x, spec.y, spec.z);
-    printf("shin = %f\n", shininess);
-
+    //printf("alb  = (%f,%f,%f)\n", alb.x, alb.y, alb.z);
+    //printf("spec = (%f,%f,%f)\n", spec.x, spec.y, spec.z);
+    //printf("shin = %f\n", shininess);
 
     float shape_prob = (float) rnd(1.0f);
     if (shape_prob < 0.33) {
@@ -296,58 +178,61 @@ int main() {
       sce.addShape(obj);
     }
   }
-
-  //sce.addShape(new Sphere(1, color(0.5, 0.8, 0.7)));
-  //sce.addShape(new Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7)));
-
-  //auto obj = Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
-  //auto obj = Sphere(1, color(0.7, 0.7, 0.7));
-  //auto obj = Cube(1);
-  //auto obj = Torus(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
-  ////obj.translate(vec3(0,1,-1));
-  //obj.translate(vec3(0,0,-1));
-  //obj.translate(vec3(0,0,-1));
-  //obj.translate(vec3(-1,1,1));
-  //obj.rotate(vec3(45));
-  //obj.update();
-  //sce.addShape(&obj);
-
-  //sce.addShape(new Sphere(point3(.5), .5, color(1,0,0)));
-
   sce.addLight(new PointLight(point3(5,4,3), color(1), 80));
-  //sce.addLight(new PointLight(point3(5,4,3), color(1)));
-  //sce.addLight(new Light(point3(5,4,3), color(1)));
-  //sce.addLight(new PointLight(point3( 5,4,3), color(0.3,1,0.5)));
-  //sce.addLight(new PointLight(point3(-4,4,3), color(1,0.3,0.5), 50));
   sce.addAmbientLight(new AmbientLight());
+}
+
+
+
+int main() {
+	GLFWwindow* window;
+  uchar4* devPtr;
+
+  device_setup(&window, &devPtr);
+
+  Camera cam;
+  Scene sce;
+
+  scene_setup(sce);
+
+  { // manual scene setup
+    //sce.addShape(new Sphere(1, color(0.5, 0.8, 0.7)));
+    //sce.addShape(new Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7)));
+
+    //auto obj = Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
+    //auto obj = Sphere(1, color(0.7, 0.7, 0.7));
+    //auto obj = Cube(1);
+    //auto obj = Torus(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
+    ////obj.translate(vec3(0,1,-1));
+    //obj.translate(vec3(0,0,-1));
+    //obj.translate(vec3(0,0,-1));
+    //obj.translate(vec3(-1,1,1));
+    //obj.rotate(vec3(45));
+    //obj.update();
+    //sce.addShape(&obj);
+
+    //sce.addShape(new Sphere(point3(.5), .5, color(1,0,0)));
+
+    //sce.addLight(new PointLight(point3(5,4,3), color(1), 80));
+    //sce.addLight(new PointLight(point3(5,4,3), color(1)));
+    //sce.addLight(new Light(point3(5,4,3), color(1)));
+    //sce.addLight(new PointLight(point3( 5,4,3), color(0.3,1,0.5)));
+    //sce.addLight(new PointLight(point3(-4,4,3), color(1,0.3,0.5), 50));
+    //sce.addAmbientLight(new AmbientLight());
+  }
 
   Renderer renderer;
-
-
   renderer.render(&cam, &sce, devPtr);
 
-  HANDLE_ERROR(cudaDeviceSynchronize()); // helps with debugging!!
-  HANDLE_ERROR(
-      cudaGraphicsUnmapResources(1, &resource, NULL)
-      );
-
-
 	while (!glfwWindowShouldClose(window)) {
-		//kernelUpdate(WIDTH, HEIGHT);
 		glDrawPixels(IMG_W, IMG_H, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 		glfwSwapBuffers(window);
-
-    // Poll for and process events
+    // Poll and process events
     glfwPollEvents();
+    // Here update scene to be interactive // TODO
 	}
 
-  HANDLE_ERROR(
-      cudaGraphicsUnregisterResource(resource)
-      );
-  glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-  glDeleteBuffers(1, &bufferObj);
-
-  glfwTerminate();
+  device_terminate();
 
   return 0;
 }
