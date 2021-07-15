@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "common.h"
 #include <chrono>
+#include <iostream>
 
 
 static __global__ void kernel(uchar4 *ptr,
@@ -42,13 +43,39 @@ static __global__ void kernel(uchar4 *ptr,
   ptr[offset].y = (int) (255 * c.g); // (int) (v * 255); //(int)255/2;
   ptr[offset].z = (int) (255 * c.b); // 0;
   ptr[offset].w = 255;
+
 }
 
+static __global__ void kernel_update_scene(Scene *sce) {
+  if (
+      threadIdx.x + blockIdx.x * blockDim.x +
+      threadIdx.y + blockIdx.y * blockDim.y +
+      threadIdx.z + blockIdx.z * blockDim.z == 0) {
+    sce->update();
+  }
+}
 
-__host__ void Renderer::render(
+__host__ Renderer::Renderer(
     Camera *cam,
     Scene *sce,
-    uchar4 *devPtr) {
+    int max_num_tick
+    ) :
+  max_num_tick_(max_num_tick) {
+  if (
+      devCamPtr_ == nullptr ||
+      devScePtr_ == nullptr //|| devTrcPtr_ == nullptr)
+    ) { // a bit ugly...
+    HANDLE_ERROR(
+        cudaMalloc((void**)&devCamPtr_, sizeof(Camera))
+        );
+    HANDLE_ERROR(
+        cudaMemcpy((void*)devCamPtr_, (void*)cam, sizeof(Camera), cudaMemcpyHostToDevice)
+        );
+    devScePtr_ = sce->to_device();
+  }
+}
+
+__host__ void Renderer::render(uchar4 *devPtr) {
   // --- Generate One Frame ---
   // TODO dims
   dim3 grids(IMG_W/16, IMG_H/16);
@@ -58,42 +85,49 @@ __host__ void Renderer::render(
   //float grids = 1;
   //dim3 threads(IMG_W, IMG_H);
 
-  Camera *devCamPtr = nullptr;
-  Tracer *devTrcPtr = nullptr; // TODO
+  if (!done_cuda_free_ && current_tick_ == max_num_tick_) {
+    HANDLE_ERROR(cudaFree((void*)devCamPtr_));
+    HANDLE_ERROR(cudaFree((void*)devScePtr_));
+    //HANDLE_ERROR(cudaFree((void*)devTrcPtr_)); // TODO
+    done_cuda_free_ = true;
+    return;
+  }
+  if (done_cuda_free_) return;
 
-  // Static allocation on device memory
-  HANDLE_ERROR(
-      cudaMalloc((void**)&devCamPtr, sizeof(Camera))
-      );
-  // Copy from host to device
-  HANDLE_ERROR(
-      cudaMemcpy((void*)devCamPtr, (void*)cam, sizeof(Camera), cudaMemcpyHostToDevice)
-      );
-  Scene *devScePtr = sce->to_device();
+  if (
+      devCamPtr_ == nullptr ||
+      devScePtr_ == nullptr //|| devTrcPtr_ == nullptr
+     ) { // a bit ugly
+    std::cout << "\nRenderer::render : ERROR bad device initialization?" << std::endl;
+  }
 
-  /// TENTATIVO AA
-  /// int AA_array_len = 8;
-  /// size_t AA_array_size = sizeof(float2) * AA_array_len;
-  /// float2 *AA_array = (float2 *) malloc(AA_array_size);
-  /// float val = 0; //0.0000001;
-  /// AA_array[0] = make_float2(-val, -val);
-  /// AA_array[1] = make_float2(-val,  val);
-  /// AA_array[2] = make_float2( val, -val);
-  /// AA_array[3] = make_float2( val,  val);
-
-  /// AA_array[0+4] = make_float2(AA_array[0+4].x/2.f, AA_array[0+4].y/2.f);
-  /// AA_array[1+4] = make_float2(AA_array[1+4].x/2.f, AA_array[1+4].y/2.f);
-  /// AA_array[2+4] = make_float2(AA_array[2+4].x/2.f, AA_array[2+4].y/2.f);
-  /// AA_array[3+4] = make_float2(AA_array[3+4].x/2.f, AA_array[3+4].y/2.f);
-
-  /// float2 *dev_AA_array = nullptr;
-  /// HANDLE_ERROR( cudaMalloc((void**)&dev_AA_array, AA_array_size) );
-  /// HANDLE_ERROR(
-  ///     cudaMemcpy((void*)dev_AA_array, (void*)AA_array, AA_array_size, cudaMemcpyHostToDevice)
-  ///     );
-  /// END // TENTATIVO AA
+  kernel_update_scene<<<1,1>>>(devScePtr_);
+  HANDLE_ERROR(cudaDeviceSynchronize());
 
 
+  {
+    /// TENTATIVO AA
+    /// int AA_array_len = 8;
+    /// size_t AA_array_size = sizeof(float2) * AA_array_len;
+    /// float2 *AA_array = (float2 *) malloc(AA_array_size);
+    /// float val = 0; //0.0000001;
+    /// AA_array[0] = make_float2(-val, -val);
+    /// AA_array[1] = make_float2(-val,  val);
+    /// AA_array[2] = make_float2( val, -val);
+    /// AA_array[3] = make_float2( val,  val);
+
+    /// AA_array[0+4] = make_float2(AA_array[0+4].x/2.f, AA_array[0+4].y/2.f);
+    /// AA_array[1+4] = make_float2(AA_array[1+4].x/2.f, AA_array[1+4].y/2.f);
+    /// AA_array[2+4] = make_float2(AA_array[2+4].x/2.f, AA_array[2+4].y/2.f);
+    /// AA_array[3+4] = make_float2(AA_array[3+4].x/2.f, AA_array[3+4].y/2.f);
+
+    /// float2 *dev_AA_array = nullptr;
+    /// HANDLE_ERROR( cudaMalloc((void**)&dev_AA_array, AA_array_size) );
+    /// HANDLE_ERROR(
+    ///     cudaMemcpy((void*)dev_AA_array, (void*)AA_array, AA_array_size, cudaMemcpyHostToDevice)
+    ///     );
+    /// END // TENTATIVO AA
+  }
 
   // qua t0
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -101,7 +135,7 @@ __host__ void Renderer::render(
   //  "generating frame num " <<
   //  current_tick_ << "\n" << std::endl;
 
-  kernel<<<grids,threads>>>(devPtr, devCamPtr, devScePtr, devTrcPtr//,
+  kernel<<<grids,threads>>>(devPtr, devCamPtr_, devScePtr_, devTrcPtr_//,
       //dev_AA_array, AA_array_len
       );
   HANDLE_ERROR(cudaDeviceSynchronize());
@@ -112,10 +146,12 @@ __host__ void Renderer::render(
   std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
 
 
-  HANDLE_ERROR(cudaFree((void*)devCamPtr));
-  HANDLE_ERROR(cudaFree((void*)devScePtr));
-  HANDLE_ERROR(cudaFree((void*)devTrcPtr));
+  //HANDLE_ERROR(cudaFree((void*)devCamPtr_));
+  //HANDLE_ERROR(cudaFree((void*)devScePtr_));
+  //HANDLE_ERROR(cudaFree((void*)devTrcPtr_));
 
   HANDLE_ERROR(cudaDeviceSynchronize());
+
+  current_tick_++;
 }
 

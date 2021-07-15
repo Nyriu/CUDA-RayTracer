@@ -45,6 +45,7 @@ class Scene {
   public:
     /** moves Scene's data to device and returns the device pointer to scene **/
     __host__ Scene* to_device();
+    __device__ void update();
 };
 
 #endif

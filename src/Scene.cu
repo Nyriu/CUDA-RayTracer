@@ -139,3 +139,13 @@ __host__ Scene* Scene::to_device() {
       );
   return devPtr_;
 }
+
+
+__device__ void Scene::update() {
+  // TODO parallelize also the udate? take a loot at shapes_to_device
+  ImplicitShape *shape = getShapes();
+  for (int i=0; i < getShapesNum(); i++) {
+    shape->update();
+    shape++;
+  }
+}

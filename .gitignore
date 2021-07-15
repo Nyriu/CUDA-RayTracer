@@ -13,6 +13,8 @@ test
 *TODO
 *png
 *ppm
+*gif
+wip_imgs/*
 
 *.log
 *.tmp

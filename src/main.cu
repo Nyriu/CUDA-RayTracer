@@ -1,6 +1,8 @@
+#include <glm/geometric.hpp>
 #define GL_GLEXT_PROTOTYPES
 
 #include <iostream>
+#include <chrono>
 
 #include <GLFW/glfw3.h>
 
@@ -32,8 +34,7 @@ cudaGraphicsResource *resource;
 void device_setup(
     // input
     // output
-	  GLFWwindow **window,
-    uchar4 **devPtr
+	  GLFWwindow **window
     ) {
   cudaDeviceProp prop;
   int dev;
@@ -73,6 +74,9 @@ void device_setup(
         cudaGraphicsMapFlagsNone
         )
       );
+}
+
+void map_resource(uchar4 **devPtr) {
   size_t size;
   HANDLE_ERROR(
       cudaGraphicsMapResources(1, &resource, NULL)
@@ -86,11 +90,14 @@ void device_setup(
       );
 }
 
-void device_terminate() {
-  // Terminate
+void unmap_resource() {
   HANDLE_ERROR(
       cudaGraphicsUnmapResources(1, &resource, NULL)
       );
+}
+
+
+void device_terminate() {
   HANDLE_ERROR(
       cudaGraphicsUnregisterResource(resource)
       );
@@ -104,11 +111,14 @@ void device_terminate() {
 void scene_setup(
     // input
     // output
-    Scene& sce
+    Scene& sce,
+    Camera& cam
     ) {
   // Init Random scene
-  int n_obj = 100;
+  //int n_obj = 100;
+  int n_obj = 30;
   srand( (unsigned)time(NULL) );
+  //srand( (unsigned) 1234 );
   //srand( (unsigned) 12345 );
   for (int i=0; i<n_obj; i++) {
     point3 pos(
@@ -130,6 +140,11 @@ void scene_setup(
     //0.2);
     //.913,.922,.924);
     float shininess = 2; // 70; // (float) rnd(60.0f);
+
+    vec3 spin(
+        (float) rnd(2.0f)-rnd(2.0f),
+        (float) rnd(2.0f)-rnd(2.0f),
+        (float) rnd(2.0f)-rnd(2.0f));
 
     //printf("alb  = (%f,%f,%f)\n", alb.x, alb.y, alb.z);
     //printf("spec = (%f,%f,%f)\n", spec.x, spec.y, spec.z);
@@ -160,6 +175,7 @@ void scene_setup(
           (float) rnd(90.0f),
           (float) rnd(90.0f)
           );
+      obj->set_spin(spin);
       sce.addShape(obj);
     } else {
       float radius = (float) rnd(0.3f) + 0.1;
@@ -175,11 +191,15 @@ void scene_setup(
           (float) rnd(90.0f),
           (float) rnd(90.0f)
           );
+      obj->set_spin(spin);
       sce.addShape(obj);
     }
   }
   sce.addLight(new PointLight(point3(5,4,3), color(1), 80));
   sce.addAmbientLight(new AmbientLight());
+
+  cam.move_to(point3(.5,.5, 5));
+  cam.update();
 }
 
 
@@ -188,16 +208,35 @@ int main() {
 	GLFWwindow* window;
   uchar4* devPtr;
 
-  device_setup(&window, &devPtr);
+  device_setup(&window);
 
   Camera cam;
+  //Camera cam(point3(0,0,5));
   Scene sce;
 
-  scene_setup(sce);
+  scene_setup(sce, cam);
 
   { // manual scene setup
-    //sce.addShape(new Sphere(1, color(0.5, 0.8, 0.7)));
-    //sce.addShape(new Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7)));
+    /**
+    ImplicitShape *obj = nullptr;
+
+    sce.addShape(new Sphere(.7, color(0.8, 0.5, 0.5)));
+    sce.addShape(new Sphere(point3(1,0,0), .5, color(0.5, 0.8, 0.5)));
+    {
+      obj = new Cube(point3(0,1,0), .3, color(0.5, 0.8, 0.7));
+      obj->set_spin(vec3(0,1,0));
+      sce.addShape(obj);
+    }
+    {
+      obj = new Cube(point3(0,0,.5), .35, color(0.5, 0.5, 0.8));
+      obj->set_spin(vec3(1,1,1));
+      sce.addShape(obj);
+    }
+    {
+      obj = new Torus(point3(.5,.7,-1), .25, color(0.8, 0.2, 0.8));
+      obj->set_spin(vec3(1,0,1));
+      sce.addShape(obj);
+    }
 
     //auto obj = Sphere(point3(1,0,0), 1, color(0.5, 0.8, 0.7));
     //auto obj = Sphere(1, color(0.7, 0.7, 0.7));
@@ -213,18 +252,55 @@ int main() {
 
     //sce.addShape(new Sphere(point3(.5), .5, color(1,0,0)));
 
-    //sce.addLight(new PointLight(point3(5,4,3), color(1), 80));
+    sce.addLight(new PointLight(point3(5,4,3), color(1), 80));
     //sce.addLight(new PointLight(point3(5,4,3), color(1)));
     //sce.addLight(new Light(point3(5,4,3), color(1)));
     //sce.addLight(new PointLight(point3( 5,4,3), color(0.3,1,0.5)));
     //sce.addLight(new PointLight(point3(-4,4,3), color(1,0.3,0.5), 50));
-    //sce.addAmbientLight(new AmbientLight());
+    sce.addAmbientLight(new AmbientLight());
+
+    //cam.move_to(point3(0,0,3));
+    cam.move_to(point3(1.5,1.5,3));
+    //cam.translate(2,3,3);
+    cam.rotateX(-25);
+    cam.rotateY(20);
+    //cam.rotateZ(0.5);
+    //cam.look_at(point3(1,1,1));
+    cam.update();
+    //cam.move_to(point3(0,0,3));
+    //cam.translate(0,0,-1);
+    //cam.update();
+
+    **/
   }
 
-  Renderer renderer;
-  renderer.render(&cam, &sce, devPtr);
+  Renderer renderer(&cam, &sce);
+  //Renderer renderer(&cam, &sce, 3); // limit num of generated frames
+
+  map_resource(&devPtr);
+  renderer.render(devPtr);
+  unmap_resource();
+
+  std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+
 
 	while (!glfwWindowShouldClose(window)) {
+    double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+    //if (elapsed >= 3000000) {
+    if (elapsed >= 16000000) {
+    //if (elapsed >= 500000000) {
+    //if (elapsed >= 1000000000) {
+      std::cout << "\n----- elapsed = " << elapsed << "[ns]\n" << std::endl;
+
+      map_resource(&devPtr);
+      renderer.render(devPtr);
+      unmap_resource();
+
+      t0=t1;
+    }
+    t1 = std::chrono::steady_clock::now();
+
 		glDrawPixels(IMG_W, IMG_H, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 		glfwSwapBuffers(window);
     // Poll and process events

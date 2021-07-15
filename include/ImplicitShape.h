@@ -17,6 +17,9 @@ class ImplicitShapeInfo {
     vec3 translations = vec3(0);
     vec3 rotations = vec3(0);
 
+    vec3 speed = vec3(0);
+    vec3 spin  = vec3(0);
+
     float additional_0 = 0.5;
     //float additional_1 = 0.25;
 
@@ -28,14 +31,19 @@ class ImplicitShapeInfo {
         const float  shininess_i,
 
         const vec3& translations_i,
-        const vec3& rotations_i
+        const vec3& rotations_i,
+
+        const vec3& speed_i,
+        const vec3& spin_i
         ) :
         shape_type(shape_type_i), 
         cdiff(cdiff_i),
         cspec(cspec_i),
         shininess(shininess_i),
         translations(translations_i),
-        rotations(rotations_i) {}
+        rotations(rotations_i),
+        speed(speed_i),
+        spin(spin_i) {}
     __host__ __device__ ImplicitShapeInfo(
         const ShapeType& shape_type_i,
 
@@ -46,14 +54,20 @@ class ImplicitShapeInfo {
         const vec3& translations_i,
         const vec3& rotations_i,
 
+        const vec3& speed_i,
+        const vec3& spin_i,
+
         const float additional_i
         ) :
-        shape_type(shape_type_i), 
-        cdiff(cdiff_i),
-        cspec(cspec_i),
-        shininess(shininess_i),
-        translations(translations_i),
-        rotations(rotations_i)
+        ImplicitShapeInfo(
+            shape_type_i,
+            cdiff_i,
+            cspec_i,
+            shininess_i,
+            translations_i,
+            rotations_i,
+            speed_i,
+            spin_i)
         {
           if (shape_type_i == ShapeType::sphere) {
             additional_0 = additional_i;
@@ -87,9 +101,10 @@ class ImplicitShape : public SceneObject {
       cdiff_(isi.cdiff),
       cspec_(isi.cspec),
       shininess_(isi.shininess) {
-        translate(isi.translations);
-        rotate(isi.rotations);
-        update();
+        translations_ = isi.translations;
+        rotations_ = isi.rotations;
+        set_spin(isi.spin);
+        //update();
       }
 
     __device__ virtual float getDist(const point3& p) const {
@@ -137,7 +152,8 @@ class ImplicitShape : public SceneObject {
       return ImplicitShapeInfo(
           ShapeType::none,
           cdiff_, cspec_, shininess_,
-          translations_, rotations_
+          translations_, rotations_,
+          speed_, spin_
           );
     }
 };
@@ -156,39 +172,20 @@ class Sphere : public ImplicitShape {
     Sphere(const point3& center, const float& radius, const color& albedo) :
       ImplicitShape(albedo), radius_(radius) {
         translate(center);
-        update();
+        //update();
       }
     __host__ __device__ Sphere(
         const point3& center, const float& radius,
         const color& albedo, const color& spec, float shininess) : 
       ImplicitShape(albedo, spec, shininess), radius_(radius) {
         translate(center);
-        update();
+        //update();
       }
     //Sphere(const point3& center, const float& radius) : center_(center), radius_(radius) {}
     __host__ __device__ Sphere(const ImplicitShapeInfo& isi) :
       ImplicitShape(isi), radius_(isi.additional_0) {}
 
     __device__ float getDist(const point3& point) const override {
-      //point3 p = point - center_; // very basic from world to local
-      //return glm::length(p) - radius_;
-      //printf("I've been called\n");
-      //if (
-      //    threadIdx.x + blockDim.x * blockIdx.x == 0 &&
-      //    threadIdx.y + blockDim.y * blockIdx.y == 0
-      //    ) {
-      //  printf("point = (%f,%f,%f)\n", point.x, point.y, point.z);
-      //  printf("radius = %f\n", radius_);
-      //  point3 p = worldToLocalP(point);
-      //  printf("p = (%f,%f,%f)\n", p.x, p.y, p.z);
-      //  printf("model : [\n %f,%f,%f,%f,\n %f,%f,%f,%f,\n %f,%f,%f,%f,\n %f,%f,%f,%f\n ]\n",
-      //      model_[0][0], model_[1][0], model_[2][0], model_[3][0],
-      //      model_[0][1], model_[1][1], model_[2][1], model_[3][1],
-      //      model_[0][2], model_[1][2], model_[2][2], model_[3][2],
-      //      model_[0][3], model_[1][3], model_[2][3], model_[3][3]
-      //      );
-      //  printf("translations_ = (%f,%f,%f)\n", translations_.x, translations_.y, translations_.z);
-      //}
       return glm::length( worldToLocalP(point)) - radius_;
     }
 
@@ -197,6 +194,7 @@ class Sphere : public ImplicitShape {
           ShapeType::sphere,
           cdiff_, cspec_, shininess_,
           translations_, rotations_,
+          speed_, spin_,
           radius_
           );
     }
@@ -211,17 +209,18 @@ class Cube : public ImplicitShape {
     Cube(const point3& center, const float& half_dim, const color& albedo) :
       ImplicitShape(albedo), half_dim_(half_dim) {
         translate(center);
-        update();
+        //update();
       }
     __host__ __device__ Cube(
         const point3& center, const float& half_dim,
         const color& albedo, const color& spec, float shininess) : 
       ImplicitShape(albedo, spec, shininess), half_dim_(half_dim) {
         translate(center);
-        update();
+        //update();
       }
     __host__ __device__ Cube(const ImplicitShapeInfo& isi) :
-      ImplicitShape(isi), half_dim_(isi.additional_0) {}
+      ImplicitShape(isi), half_dim_(isi.additional_0) {
+      }
 
     __device__ float getDist(const point3& point) const override {
       point3 p = worldToLocalP(point);
@@ -235,6 +234,7 @@ class Cube : public ImplicitShape {
           ShapeType::cube,
           cdiff_, cspec_, shininess_,
           translations_, rotations_,
+          speed_, spin_,
           half_dim_
           );
     }
@@ -258,14 +258,14 @@ class Torus : public ImplicitShape {
     Torus(const point3& center, const float& r0, const color& albedo) :
       ImplicitShape(albedo), r0_(r0) {
         translate(center);
-        update();
+        //update();
       }
     __host__ __device__ Torus(
         const point3& center, const float& r0,
         const color& albedo, const color& spec, float shininess) : 
       ImplicitShape(albedo, spec, shininess), r0_(r0) {
         translate(center);
-        update();
+        //update();
       }
 
     __host__ __device__ Torus(const ImplicitShapeInfo& isi) :
@@ -285,6 +285,7 @@ class Torus : public ImplicitShape {
           ShapeType::torus,
           cdiff_, cspec_, shininess_,
           translations_, rotations_,
+          speed_, spin_,
           r0_
           );
     }

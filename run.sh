@@ -7,7 +7,7 @@ fi
 if [ -d "./build" ]; then
   rm -rf main
   cd build
-  make
+  make -j
   cd ..
 elif [ ! -f "./main" ]; then
   echo "Building..."

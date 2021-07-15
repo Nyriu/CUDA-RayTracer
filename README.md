@@ -23,6 +23,10 @@
 
 ![](./imgs/2021-07-14-124423_512x512_scrot.png)
 
+* Scene update and real-time rendering
+
+![](./imgs/animation.gif)
+
 
 
 

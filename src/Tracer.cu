@@ -4,9 +4,9 @@ __device__ color Tracer::trace(const Ray *r, const Scene *sce) const {
   //return color( (r->dir_.x + 1)+.5, (r->dir_.y + 1)+.5, (r->dir_.z + 1)+.5);
   HitRecord ht = sphereTrace(r,sce);
 
-  if (ht.isMiss() || ht.t_ >= max_distance_) // Background
-    //return color(0);
-    return color((r->dir_.x + 1)+.5, (r->dir_.y + 1)+.5, (r->dir_.z + 1)+.5);
+  if (ht.isMiss() || ht.t_ >= max_distance_) // background
+    return color(0);
+    //return color((r->dir_.x + 1)+.5, (r->dir_.y + 1)+.5, (r->dir_.z + 1)+.5);
   color c = shade(&ht, sce);
   return c;
 };

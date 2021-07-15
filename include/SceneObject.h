@@ -3,9 +3,11 @@
 
 #include "common.h"
 #include <glm/fwd.hpp>
+#include <glm/mat3x3.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/gtx/transform.hpp>
 
+using mat3 = glm::mat3x3;
 using mat4 = glm::mat4x4;
 using vec4 = glm::vec4;
 
@@ -15,10 +17,10 @@ class SceneObject {
     mat4 model_inv_ = mat4(1); // local transformation matrix inverse
 
     vec3 translations_ = vec3(0); // cumulative vector of tranlations
-    vec3 rotations_    = vec3(0);    // cumulative vector of rotations (in degrees)
+    vec3 rotations_    = vec3(0); // cumulative vector of rotations (in degrees)
 
     vec3 speed_ = vec3(0); // x,y,z movement done in one time tick
-    vec3 spin_  = vec3(0);  // x,y,z deg of rotation done in one time tick
+    vec3 spin_  = vec3(0); // x,y,z deg of rotation done in one time tick
 
     // TOOD implement parent and has_parent?
 
@@ -36,7 +38,12 @@ class SceneObject {
     __host__ __device__ void update_model_inv();
 
   public:
-    //__host__ __device__ SceneObject() { init(); }
+    __host__ __device__ SceneObject() = default;
+    __host__ __device__ SceneObject(const point3 center) {
+      move_to(center);
+      //update();
+    }
+
     __host__ __device__ vec3   localToWorld (const vec3& target, const bool as_point) const;
     __host__ __device__ vec3   localToWorldV(const vec3& target) const;
     __device__ point3 localToWorldP(const point3& target) const;
@@ -47,6 +54,8 @@ class SceneObject {
 
     __host__ __device__ SceneObject translate(const float x, const float y, const float z);
     __host__ __device__ SceneObject translate(const vec3& t);
+
+    __host__ __device__ SceneObject move_to(const point3& p);
 
     __host__ __device__ SceneObject rotate(const float deg_x, const float deg_y, const float deg_z);
     __host__ __device__ SceneObject rotate(const vec3& rotations);
