@@ -1,9 +1,17 @@
 #include "SceneBuilder.h"
 
+bool SceneBuilder::generate_scene(
+    Scene *sce, Camera *cam
+    ) const {
+  return generate_scene(
+      SceneBuilder::PreBuiltScene::none,
+      sce, cam
+      );
+}
 
 bool SceneBuilder::generate_scene(
-    Scene *sce, Camera *cam,
-    PreBuiltScene scene_idx
+    PreBuiltScene scene_idx,
+    Scene *sce, Camera *cam
     ) const {
   if (rand_seed_ < 0) {
     srand( (unsigned)time(NULL) );
@@ -98,10 +106,10 @@ bool SceneBuilder::genSce_random(Scene *sce, Camera *cam) const {
       sce->addShape(obj);
     }
   }
-  sce->addLight(new PointLight(point3(5,4,3), color(1), 80));
-  sce->addAmbientLight(new AmbientLight());
+  sce->addLight(new PointLight(point3(5,4,3), color(1), 350)); // TODO randomize
+  sce->addAmbientLight(new AmbientLight()); // TODO randomize
 
-  cam->move_to(point3(.5,.5, 5));
+  cam->move_to(point3(.5,.5, 5)); // TODO randomize
   cam->update();
 
   return true;

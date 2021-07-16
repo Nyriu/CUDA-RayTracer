@@ -101,18 +101,16 @@ int main() {
 
   device_setup(&window);
 
-  Camera cam;
-  //Camera cam(point3(0,0,5));
-  Scene sce;
+  Camera *cam = new Camera();
+  Scene  *sce = new Scene();
 
   SceneBuilder sceBui(5,1);
   sceBui.generate_scene(
-      &sce, &cam,
-      //SceneBuilder::PreBuiltScene::none
-      SceneBuilder::PreBuiltScene::simple_moving
+      SceneBuilder::PreBuiltScene::none,
+      sce, cam
       );
 
-  Renderer renderer(&cam, &sce);
+  Renderer renderer(cam, sce);
   //Renderer renderer(&cam, &sce, 3); // limit num of generated frames
 
   map_resource(&devPtr);
@@ -125,10 +123,12 @@ int main() {
 
 	while (!glfwWindowShouldClose(window)) {
     double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-    //if (elapsed >= 3000000) {
-    if (elapsed >= 16000000) {
-    //if (elapsed >= 500000000) {
-    //if (elapsed >= 1000000000) {
+    if
+      // (elapsed >= 3000000)
+      (elapsed >= 16000000)
+        //(elapsed >= 500000000)
+        //(elapsed >= 1000000000)
+      {
       std::cout << "\n----- elapsed = " << elapsed << "[ns]\n" << std::endl;
 
       map_resource(&devPtr);

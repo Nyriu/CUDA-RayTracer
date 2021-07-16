@@ -99,8 +99,15 @@ __host__ void Renderer::render(uchar4 *devPtr) {
     std::cout << "\nRenderer::render : ERROR bad device initialization?" << std::endl;
   }
 
+  std::chrono::steady_clock::time_point t0_update = std::chrono::steady_clock::now();
   kernel_update_scene<<<1,1>>>(devScePtr_);
   HANDLE_ERROR(cudaDeviceSynchronize());
+  std::chrono::steady_clock::time_point t1_update = std::chrono::steady_clock::now();
+  if (verbose_) {
+    std::cout << "Update Time = " << std::chrono::duration_cast<std::chrono::     seconds>(t1_update - t0_update).count() << "[s]" << std::endl;
+    std::cout << "Update Time = " << std::chrono::duration_cast<std::chrono::microseconds>(t1_update - t0_update).count() << "[µs]" << std::endl;
+  }
+
 
 
   {
@@ -139,9 +146,10 @@ __host__ void Renderer::render(uchar4 *devPtr) {
   HANDLE_ERROR(cudaDeviceSynchronize());
   // qua t1
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  // per calcolare quanto ha messo a fare il frame
-  std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
-  std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+  if (verbose_) {
+    std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::     seconds>(end - begin).count() << "[s]" << std::endl;
+    std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+  }
 
 
   //HANDLE_ERROR(cudaFree((void*)devCamPtr_));

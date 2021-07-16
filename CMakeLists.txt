@@ -48,17 +48,38 @@ file(GLOB SOURCES "src/*.c*")
 #set_target_properties( particles
 #                       PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
+file( GLOB LIB_SOURCES "src/*.c*" )
+file( GLOB LIB_HEADERS "include/*.h" )
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../")
+add_library( MyLib ${LIB_SOURCES} ${LIB_HEADERS} )
+set_property(TARGET MyLib PROPERTY CUDA_ARCHITECTURES 75)
+set_target_properties(MyLib
+  PROPERTIES CUDA_SEPARABLE_COMPILATION ON
+  )
+target_link_libraries(MyLib PRIVATE glm glfw GL)
 
-add_executable(main ${SOURCES})
+
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../executable")
+
+add_executable(main app/main.cu)
+#add_executable(main ${SOURCES})
 #set_property(TARGET main PROPERTY CUDA_ARCHITECTURES 50 75)
 set_property(TARGET main PROPERTY CUDA_ARCHITECTURES 75)
 #add_compile_options(--cuda-gpu-arch=sm_75)
 set_target_properties( main
   PROPERTIES CUDA_SEPARABLE_COMPILATION ON
   )
-target_link_libraries(main PRIVATE glm glfw GL)
+target_link_libraries(main PRIVATE MyLib glm glfw GL)
+
+
+add_executable(benchmarking app/benchmarking.cu)
+set_property(TARGET benchmarking PROPERTY CUDA_ARCHITECTURES 75)
+set_target_properties(benchmarking
+  PROPERTIES CUDA_SEPARABLE_COMPILATION ON
+  )
+target_link_libraries(benchmarking PRIVATE MyLib glm glfw GL)
+
 
 #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_50,code=sm_50") # works but bad solution
 # TODO make work the one below and remove the one above

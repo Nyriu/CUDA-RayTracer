@@ -38,10 +38,8 @@ class SceneBuilder {
       n_objs_(n_objs),
       n_lights_(n_lights) {}
 
-    bool generate_scene(
-        Scene *sce, Camera *cam,
-        PreBuiltScene scene_idx = PreBuiltScene::none
-        ) const;
+    bool generate_scene(Scene *sce, Camera *cam) const;
+    bool generate_scene(PreBuiltScene scene_idx, Scene *sce, Camera *cam) const;
   private:
     bool genSce_random(Scene *sce, Camera *cam) const;
     bool genSce_simple_moving(Scene *sce, Camera *cam) const;

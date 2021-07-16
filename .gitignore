@@ -1,4 +1,5 @@
 build
+executable
 main
 hello
 .cache

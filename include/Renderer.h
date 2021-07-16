@@ -17,6 +17,7 @@ class Renderer {
 
     bool done_cuda_free_ = false;
 
+    bool verbose_ = true;
 
   public:
     __host__ Renderer() = default;
@@ -27,6 +28,7 @@ class Renderer {
         int max_num_tick = -1
         );
 
+    __host__ void verbose(bool b) { verbose_ = b; };
     __host__ void render(uchar4 *devPtr);
 };
 
