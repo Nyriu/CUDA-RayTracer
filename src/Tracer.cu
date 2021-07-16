@@ -1,7 +1,7 @@
 #include "Tracer.h"
+#include <glm/gtx/norm.hpp>
 
 __device__ color Tracer::trace(const Ray *r, const Scene *sce) const {
-  //return color( (r->dir_.x + 1)+.5, (r->dir_.y + 1)+.5, (r->dir_.z + 1)+.5);
   HitRecord ht = sphereTrace(r,sce);
 
   if (ht.isMiss() || ht.t_ >= max_distance_) // background
@@ -68,7 +68,7 @@ __device__ color Tracer::shade(const HitRecord *ht, const Scene *sce) const {
 
     for (int i=0; i < sce->getLightsNum(); i++) {
       l = (lgt->getPosition() - p);
-      dist2 = glm::length(l); // squared dist
+      dist2 = glm::length2(l); // squared dist
       l = glm::normalize(l);
       nDotl = glm::dot(n,l);
 
@@ -82,7 +82,6 @@ __device__ color Tracer::shade(const HitRecord *ht, const Scene *sce) const {
         // With shadows below
         Ray shadowRay(p,l);
         shadow = sphereTraceShadow(&shadowRay, shape, sce);
-        //shadow = false; // TODO
         color lightColor = lgt->getColor();
         color lightIntensity = lgt->getIntensity();
 

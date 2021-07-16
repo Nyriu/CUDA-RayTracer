@@ -37,13 +37,11 @@ static __global__ void kernel(uchar4 *ptr,
 
   //color c(0.2);
 
-
   // accessing uchar4 vs unsigned char*
   ptr[offset].x = (int) (255 * c.r); // (int) (u * 255); //0;
   ptr[offset].y = (int) (255 * c.g); // (int) (v * 255); //(int)255/2;
   ptr[offset].z = (int) (255 * c.b); // 0;
   ptr[offset].w = 255;
-
 }
 
 static __global__ void kernel_update_scene(Scene *sce) {

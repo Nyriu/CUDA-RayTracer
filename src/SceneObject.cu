@@ -79,14 +79,6 @@ __host__ __device__ SceneObject SceneObject::set_spin(const vec3& spin) {
   return *this;
 }
 
-//__host__ __device__ point3 SceneObject::get_center() const {
-//  return point3(
-//      model_[3][0],
-//      model_[3][1],
-//      model_[3][2]
-//      );
-//}
-
 __host__ __device__ void SceneObject::update() {
   translate(speed_);
   rotate(spin_);

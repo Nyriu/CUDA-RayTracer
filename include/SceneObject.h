@@ -22,18 +22,8 @@ class SceneObject {
     vec3 speed_ = vec3(0); // x,y,z movement done in one time tick
     vec3 spin_  = vec3(0); // x,y,z deg of rotation done in one time tick
 
-    // TOOD implement parent and has_parent?
+    // TODO implement parent and has_parent?
 
-    //__host__ __device__ void init() {
-    //  model_         = mat4(1.0); // identity
-    //  model_inv_ = mat4(1.0); // identity
-
-    //  translations_ = vec3(0);
-    //  rotations_    = vec3(0);
-
-    //  speed_ = vec3(0);
-    //  spin_  = vec3(0);
-    //}
     __host__ __device__ void update_model();
     __host__ __device__ void update_model_inv();
 
@@ -41,7 +31,6 @@ class SceneObject {
     __host__ __device__ SceneObject() = default;
     __host__ __device__ SceneObject(const point3 center) {
       move_to(center);
-      //update();
     }
 
     __host__ __device__ vec3   localToWorld (const vec3& target, const bool as_point) const;
