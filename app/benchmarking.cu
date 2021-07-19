@@ -119,10 +119,6 @@ void device_terminate() {
    * update abilitato/disabilitato (1 solo frame)
 */
 
-void empty_scene(
-    ) {
-}
-
 
 
 std::string bench_dir_path = "./times/";
@@ -149,6 +145,26 @@ BenchmarkTimeWriter* benchmark_setup() {
         timestamp_id, filepath);
 }
 
+
+void empty_scene(
+    ) {
+}
+void bench_init_0(
+    Camera *cam, Scene  *sce,
+    BenchmarkTimeWriter *benchfile) {
+  int n_objs   = 5; // objects number in random scene
+  int n_lights = 1; // objects number in random scene
+  benchfile->n_objs_ = n_objs;
+  benchfile->n_lights_ = n_lights;
+
+  SceneBuilder sceBui(n_objs, n_lights, benchfile);
+  sceBui.generate_scene(
+      SceneBuilder::PreBuiltScene::none,
+      sce, cam
+      );
+}
+
+
 int main() {
   std::cout << "Benchmarking!" << std::endl;
 
@@ -161,31 +177,23 @@ int main() {
   benchfile->img_h_ = IMG_H;
   benchfile->img_w_ = IMG_W;
 
+  std::chrono::steady_clock::time_point t0_total = std::chrono::steady_clock::now();
+
   Camera *cam = new Camera();
   Scene  *sce = new Scene();
 
-  int n_objs   = 5; // objects number in random scene
-  int n_lights = 1; // objects number in random scene
-  benchfile->n_objs_ = n_objs;
-  benchfile->n_lights_ = n_lights;
-
-  SceneBuilder sceBui(n_objs, n_lights, benchfile);
-  sceBui.generate_scene(
-      SceneBuilder::PreBuiltScene::none,
-      sce, cam
-      );
+  bench_init_0(cam,sce,benchfile);
 
   Renderer renderer(cam, sce);
 
   map_resource(&devPtr);
   renderer.verbose(false);
-  //renderer.benchmarking(true, benchfile); // TODO
+  renderer.benchmarking(true, benchfile);
   renderer.render(devPtr);
   unmap_resource();
 
   std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-
 
   int num_frames = 10;
   for (int i=0; i<num_frames; i++) {
@@ -212,7 +220,10 @@ int main() {
     // Poll and process events
     glfwPollEvents();
 	}
+  std::chrono::steady_clock::time_point t1_total = std::chrono::steady_clock::now();
 
+  benchfile->total_microsec_ = std::chrono::duration_cast<std::chrono::microseconds>(t1_total - t0_total).count();
+  benchfile->additional_ = "nada";
   benchfile->write();
   benchfile->close();
 

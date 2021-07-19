@@ -107,7 +107,9 @@ __host__ void Renderer::render(uchar4 *devPtr) {
     std::cout << "Update Time = " << std::chrono::duration_cast<std::chrono::     seconds>(t1_update - t0_update).count() << "[s]" << std::endl;
     std::cout << "Update Time = " << std::chrono::duration_cast<std::chrono::microseconds>(t1_update - t0_update).count() << "[µs]" << std::endl;
   }
-
+  if (benchmarking_) {
+    bTWriter_->update_[current_tick_] = std::chrono::duration_cast<std::chrono::microseconds>(t1_update - t0_update).count();
+  }
 
 
   {
@@ -147,8 +149,13 @@ __host__ void Renderer::render(uchar4 *devPtr) {
   // qua t1
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   if (verbose_) {
-    std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::     seconds>(end - begin).count() << "[s]" << std::endl;
-    std::cout << "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+    std::cout <<
+      "Frame Num = " << current_tick_ << "\n" << 
+      "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::     seconds>(end - begin).count() << "[s]\n" <<
+      "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]\n" << std::endl;
+  }
+  if (benchmarking_) {
+    bTWriter_->render_[current_tick_] = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
   }
 
 

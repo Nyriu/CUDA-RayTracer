@@ -88,7 +88,7 @@ class BenchmarkTimeWriter {
       myfile_ << rnd_or_enc_ << ",";
       myfile_ << seed_or_code_ << ",";
       myfile_ << total_microsec_  << ",";
-      for (int i=1; i<=50; i++) {
+      for (int i=0; i<50; i++) {
         myfile_ << update_[i] << ",";
         myfile_ << render_[i] << ",";
       }
