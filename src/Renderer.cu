@@ -10,7 +10,7 @@ static __global__ void kernel(uchar4 *ptr,
     const Tracer *trc//, const float2 *AA_array, const int AA_array_len
     ) {
 
-  // map from threadIdx/BlockIdx to pixel position
+  // map from threadIdx/BlockIdx to pixel positioa
   int x = threadIdx.x + blockIdx.x * blockDim.x;
   int y = threadIdx.y + blockIdx.y * blockDim.y;
   int offset = x + y * blockDim.x * gridDim.x;
@@ -76,10 +76,10 @@ __host__ Renderer::Renderer(
 __host__ void Renderer::render(uchar4 *devPtr) {
   // --- Generate One Frame ---
   // TODO dims
-  dim3 grids(IMG_W/16, IMG_H/16);
-  dim3 threads(16,16);
-  //dim3 grids(IMG_W, IMG_H);
-  //dim3 threads(1);
+  //dim3 grids(IMG_W/16, IMG_H/16);
+  //dim3 threads(16,16);
+  dim3 grids(IMG_W, IMG_H);
+  dim3 threads(1);
   //float grids = 1;
   //dim3 threads(IMG_W, IMG_H);
 

@@ -18,6 +18,9 @@ class SceneBuilder {
     int n_objs_   = 5;
     int n_lights_ = 1;
 
+
+    BenchmarkTimeWriter *bTWriter_;
+
   public:
     enum PreBuiltScene { none, simple_moving };
 
@@ -28,6 +31,16 @@ class SceneBuilder {
       rand_seed_(-1),
       n_objs_(n_objs),
       n_lights_(n_lights) {}
+
+    SceneBuilder(
+        int n_objs,
+        int n_lights,
+        BenchmarkTimeWriter *bTWriter
+        ) :
+      rand_seed_(-1),
+      n_objs_(n_objs),
+      n_lights_(n_lights),
+      bTWriter_(bTWriter) {}
 
     SceneBuilder(
         float rand_seed,

@@ -1,7 +1,12 @@
+#include <ctime>
 #include <glm/geometric.hpp>
 #define GL_GLEXT_PROTOTYPES
 
 #include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <string>
+
 #include <chrono>
 
 #include <GLFW/glfw3.h>
@@ -120,6 +125,30 @@ void empty_scene(
 
 
 
+std::string bench_dir_path = "./times/";
+
+BenchmarkTimeWriter* benchmark_setup() {
+  if (!std::filesystem::exists(bench_dir_path)) {
+    std::cout << "creating dir " << bench_dir_path << std::endl;
+    std::filesystem::create_directory(bench_dir_path);
+  }
+
+  //std::string filename = "example.txt";
+  int timestamp_id = std::time(0);
+  std::string filename = std::to_string(timestamp_id) + ".txt";
+  std::string filepath = bench_dir_path + filename;
+
+  //std::ofstream myfile(filepath);
+  //std::ofstream myfile();
+  //myfile.open("example.txt");
+  //std::cout << "Writing to " << filepath << std::endl;
+  //myfile << "Writing this to a file.\n";
+  //myfile.close();
+
+  return new BenchmarkTimeWriter(
+        timestamp_id, filepath);
+}
+
 int main() {
   std::cout << "Benchmarking!" << std::endl;
 
@@ -128,12 +157,19 @@ int main() {
 
   device_setup(&window);
 
+  BenchmarkTimeWriter *benchfile = benchmark_setup();
+  benchfile->img_h_ = IMG_H;
+  benchfile->img_w_ = IMG_W;
+
   Camera *cam = new Camera();
   Scene  *sce = new Scene();
 
   int n_objs   = 5; // objects number in random scene
   int n_lights = 1; // objects number in random scene
-  SceneBuilder sceBui(n_objs, n_lights);
+  benchfile->n_objs_ = n_objs;
+  benchfile->n_lights_ = n_lights;
+
+  SceneBuilder sceBui(n_objs, n_lights, benchfile);
   sceBui.generate_scene(
       SceneBuilder::PreBuiltScene::none,
       sce, cam
@@ -143,6 +179,7 @@ int main() {
 
   map_resource(&devPtr);
   renderer.verbose(false);
+  //renderer.benchmarking(true, benchfile); // TODO
   renderer.render(devPtr);
   unmap_resource();
 
@@ -175,6 +212,9 @@ int main() {
     // Poll and process events
     glfwPollEvents();
 	}
+
+  benchfile->write();
+  benchfile->close();
 
   device_terminate();
 

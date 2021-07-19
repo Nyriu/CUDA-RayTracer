@@ -13,16 +13,24 @@ bool SceneBuilder::generate_scene(
     PreBuiltScene scene_idx,
     Scene *sce, Camera *cam
     ) const {
+  unsigned int seed = 0;
   if (rand_seed_ < 0) {
-    srand( (unsigned)time(NULL) );
+    seed = (unsigned)time(NULL) ;
   } else {
-    srand( (unsigned) rand_seed_ );
+    seed = (unsigned)rand_seed_;
   }
+  srand((unsigned)seed);
+  bTWriter_->n_objs_ = n_objs_;
+  bTWriter_->n_lights_ = n_lights_;
 
   if (scene_idx == PreBuiltScene::none) {
+    bTWriter_->rnd_or_enc_ = 0;
+    bTWriter_->seed_or_code_ = seed;
     return genSce_random(sce, cam);
   }
   if (scene_idx == PreBuiltScene::simple_moving) {
+    bTWriter_->rnd_or_enc_ = 1;
+    bTWriter_->seed_or_code_ = scene_idx;
     return genSce_simple_moving(sce, cam);
   }
   // TODO add other prebuilt cases

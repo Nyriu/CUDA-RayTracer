@@ -110,8 +110,8 @@ int main() {
       sce, cam
       );
 
-  Renderer renderer(cam, sce);
-  //Renderer renderer(&cam, &sce, 3); // limit num of generated frames
+  //Renderer renderer(cam, sce);
+  Renderer renderer(cam, sce, 1); // limit num of generated frames
 
   map_resource(&devPtr);
   renderer.render(devPtr);
@@ -121,6 +121,8 @@ int main() {
   std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
 
+  int i=0;
+	//while (!glfwWindowShouldClose(window) && i<20) {
 	while (!glfwWindowShouldClose(window)) {
     double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
     if
@@ -129,7 +131,7 @@ int main() {
         //(elapsed >= 500000000)
         //(elapsed >= 1000000000)
       {
-      std::cout << "\n----- elapsed = " << elapsed << "[ns]\n" << std::endl;
+      //std::cout << "\n----- elapsed = " << elapsed << "[ns]\n" << std::endl;
 
       map_resource(&devPtr);
       renderer.render(devPtr);
@@ -144,6 +146,7 @@ int main() {
     // Poll and process events
     glfwPollEvents();
     // Here update scene to be interactive // TODO
+    i++;
 	}
 
   device_terminate();

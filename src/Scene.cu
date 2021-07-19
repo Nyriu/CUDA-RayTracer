@@ -79,6 +79,7 @@ __host__ void Scene::shapes_to_device() {
       );
 
   free(infos);
+  // TODO qua fare controllo sul numero max di shape e di thread in un block
   copy_kernel<<<1,shapes_.size()>>>(dev_infos, shapes_.size());
   HANDLE_ERROR(cudaDeviceSynchronize());
 }
