@@ -1,5 +1,6 @@
 #include <ctime>
 #include <glm/geometric.hpp>
+#include <ostream>
 #define GL_GLEXT_PROTOTYPES
 
 #include <iostream>
@@ -119,7 +120,10 @@ void device_terminate() {
    * update abilitato/disabilitato (1 solo frame)
 */
 
-
+struct AdditionalInputs {
+  int n_objs   = 0;
+  int n_lights = 0;
+};
 
 std::string bench_dir_path = "./times/";
 
@@ -141,20 +145,28 @@ BenchmarkTimeWriter* benchmark_setup() {
   //myfile << "Writing this to a file.\n";
   //myfile.close();
 
-  return new BenchmarkTimeWriter(
-        timestamp_id, filepath);
+  return new BenchmarkTimeWriter(timestamp_id, filepath);
 }
 
 
 void empty_scene(
     ) {
+  //todo
 }
 void bench_init_0(
     Camera *cam, Scene  *sce,
-    BenchmarkTimeWriter *benchfile) {
-  int n_objs   = 5; // objects number in random scene
-  int n_lights = 1; // objects number in random scene
-  benchfile->n_objs_ = n_objs;
+    BenchmarkTimeWriter *benchfile,
+    AdditionalInputs *addin=nullptr) {
+
+  int n_objs   = 5;
+  int n_lights = 1;
+
+  if (addin != nullptr) {
+    n_objs = addin->n_objs;
+    n_lights = addin->n_lights;
+  }
+
+  benchfile->n_objs_   = n_objs;
   benchfile->n_lights_ = n_lights;
 
   SceneBuilder sceBui(n_objs, n_lights, benchfile);
@@ -164,25 +176,22 @@ void bench_init_0(
       );
 }
 
-
-int main() {
-  std::cout << "Benchmarking!" << std::endl;
-
-	GLFWwindow* window;
-  uchar4* devPtr;
-
-  device_setup(&window);
-
-  BenchmarkTimeWriter *benchfile = benchmark_setup();
+void run_benchmarking(
+	GLFWwindow* window,
+  uchar4* devPtr,
+  BenchmarkTimeWriter *benchfile,
+  void (*bench_scene)(Camera *cam, Scene  *sce, BenchmarkTimeWriter *benchfile, AdditionalInputs *addin),
+  AdditionalInputs *addin = nullptr
+  ) {
   benchfile->img_h_ = IMG_H;
   benchfile->img_w_ = IMG_W;
 
-  std::chrono::steady_clock::time_point t0_total = std::chrono::steady_clock::now();
+  //std::chrono::steady_clock::time_point t0_total = std::chrono::steady_clock::now();
 
   Camera *cam = new Camera();
   Scene  *sce = new Scene();
 
-  bench_init_0(cam,sce,benchfile);
+  bench_scene(cam,sce,benchfile, addin);
 
   Renderer renderer(cam, sce);
 
@@ -197,38 +206,79 @@ int main() {
 
   int num_frames = 10;
   for (int i=0; i<num_frames; i++) {
-    double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-    if
-      (true) // uncapped "frame rate"
+    //double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+    //if
+      //(true) // uncapped "frame rate"
       // (elapsed >= 3000000)
       //(elapsed >= 16000000)
       //(elapsed >= 500000000)
       //(elapsed >= 1000000000)
-      {
+      //{
       //std::cout << "\n----- elapsed = " << elapsed << "[ns]\n" << std::endl;
 
-      map_resource(&devPtr);
-      renderer.render(devPtr);
-      unmap_resource();
-
-      t0=t1;
-    }
+    t0 = std::chrono::steady_clock::now();
+    map_resource(&devPtr);
+    renderer.render(devPtr);
+    unmap_resource();
     t1 = std::chrono::steady_clock::now();
+    benchfile->total_microsec_[i] = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+
+      //t0=t1;
+    //}
+    //t1 = std::chrono::steady_clock::now();
 
 		glDrawPixels(IMG_W, IMG_H, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 		glfwSwapBuffers(window);
     // Poll and process events
     glfwPollEvents();
 	}
-  std::chrono::steady_clock::time_point t1_total = std::chrono::steady_clock::now();
+  //std::chrono::steady_clock::time_point t1_total = std::chrono::steady_clock::now();
 
-  benchfile->total_microsec_ = std::chrono::duration_cast<std::chrono::microseconds>(t1_total - t0_total).count();
+  //benchfile->total_microsec_ = std::chrono::duration_cast<std::chrono::microseconds>(t1_total - t0_total).count();
   benchfile->additional_ = "nada";
   benchfile->write();
-  benchfile->close();
+}
 
+
+
+int main() {
+  std::cout << "Benchmarking!" << std::endl;
+  std::chrono::steady_clock::time_point t0_benchmark_start = std::chrono::steady_clock::now();
+
+	GLFWwindow* window;
+  uchar4* devPtr;
+
+  device_setup(&window);
+  BenchmarkTimeWriter *benchfile = benchmark_setup();
+
+  AdditionalInputs *addin = new AdditionalInputs();
+
+  //for (int i=0; i<101; i++) {
+  for (int i=0; i<51; i++) {
+    std::cout << "Benchmarking " << i << std::endl;
+
+    if (i == 0) addin->n_objs = 0;
+    //else if ((i-1)% 10 == 0) addin->n_objs = addin->n_objs + 5;
+    else if ((i-1)% 5 == 0) addin->n_objs = addin->n_objs + 2;
+    else addin->n_objs = addin->n_objs;
+
+    addin->n_lights = 1;
+    std::cout << "n_objs   = " << addin->n_objs << std::endl;
+    std::cout << "n_lights = " << addin->n_lights << std::endl;
+
+    benchfile->id_ = i;
+    run_benchmarking(window, devPtr, benchfile,
+        bench_init_0, addin
+        );
+  }
+
+  benchfile->close();
   device_terminate();
 
+  std::chrono::steady_clock::time_point t1_benchmark_end = std::chrono::steady_clock::now();
+  std::cout <<
+    "Benchmarking Total Time = " << std::chrono::duration_cast<std::chrono::seconds>(t1_benchmark_end - t0_benchmark_start).count() << "[s]\n" <<
+    "Benchmarking Total Time = " << std::chrono::duration_cast<std::chrono::minutes>(t1_benchmark_end - t0_benchmark_start).count() << "[m]\n" << std::endl;
   return 0;
 }
 

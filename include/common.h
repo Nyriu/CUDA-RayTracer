@@ -49,13 +49,15 @@ class BenchmarkTimeWriter {
     std::ofstream myfile_;
 
   public:
+    int id_=0;
     int img_h_;
     int img_w_;
     int n_objs_;
     int n_lights_;
     int rnd_or_enc_;
     int seed_or_code_;
-    int total_microsec_;
+    //int total_microsec_;
+    int total_microsec_[50] = { 0 };
     int update_[50] = { 0 };
     int render_[50] = { 0 };
     std::string additional_;
@@ -65,34 +67,41 @@ class BenchmarkTimeWriter {
       timestamp_id_(timestamp_id), filepath_(filepath) {
         std::cout << filepath_ << std::endl;
         myfile_.open(filepath_);
-        myfile_ << "IMG_H" << ",";
-        myfile_ << "IMG_W" << ",";
-        myfile_ << "n_obj" << ",";
+        myfile_ << "id" << ",";
+        myfile_ << "img_h" << ",";
+        myfile_ << "img_w" << ",";
+        myfile_ << "n_objs" << ",";
         myfile_ << "n_lights" << ",";
-        myfile_ << "rnd-enc" << ",";
-        myfile_ << "seed-code" << ",";
-        myfile_ << "total_µs" << ",";
-        for (int i=1; i<=50; i++) {
-          myfile_ << "update_" << i << ",";
-          myfile_ << "render_" << i << ",";
-        }
+        myfile_ << "rnd_or_enc" << ",";
+        myfile_ << "seed_or_code" << ",";
+        myfile_ << "frame_num" << ",";
+        myfile_ << "total_microsec" << ",";
+        myfile_ << "update_time" << ",";
+        myfile_ << "render_time" << ",";
+        //for (int i=1; i<=50; i++) {
+        //  myfile_ << "update_" << i << ",";
+        //  myfile_ << "render_" << i << ",";
+        //}
         myfile_ << "additional" << "\n";
       }
 
 
     void write() {
-      myfile_ << img_h_     << ",";
-      myfile_ << img_w_     << ",";
-      myfile_ << n_objs_     << ",";
-      myfile_ << n_lights_  << ",";
-      myfile_ << rnd_or_enc_ << ",";
-      myfile_ << seed_or_code_ << ",";
-      myfile_ << total_microsec_  << ",";
       for (int i=0; i<50; i++) {
+        myfile_ << id_     << ",";
+        myfile_ << img_h_     << ",";
+        myfile_ << img_w_     << ",";
+        myfile_ << n_objs_     << ",";
+        myfile_ << n_lights_  << ",";
+        myfile_ << rnd_or_enc_ << ",";
+        myfile_ << seed_or_code_ << ",";
+        myfile_ << i+1  << ",";
+        //myfile_ << total_microsec_  << ",";
+        myfile_ << total_microsec_[i] << ",";
         myfile_ << update_[i] << ",";
         myfile_ << render_[i] << ",";
+        myfile_ << additional_ << "\n";
       }
-      myfile_ << additional_ << "\n";
     }
 
     void close() { myfile_.close(); }
