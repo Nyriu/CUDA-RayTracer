@@ -54,7 +54,7 @@ class BenchmarkTimeWriter {
     int img_w_;
     int n_objs_;
     int n_lights_;
-    int rnd_or_enc_;
+    int rnd_or_enc_=0;
     int seed_or_code_;
     //int total_microsec_;
     int total_microsec_[50] = { 0 };

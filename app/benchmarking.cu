@@ -1,5 +1,6 @@
 #include <ctime>
 #include <glm/geometric.hpp>
+#include <iterator>
 #include <ostream>
 #define GL_GLEXT_PROTOTYPES
 
@@ -46,7 +47,7 @@ void device_setup(GLFWwindow **window) {
 		exit(EXIT_FAILURE);
 	}
 
-  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+  //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Hide GLFW window
 
 	*window = glfwCreateWindow(IMG_W, IMG_H, "GLFW Window", NULL, NULL);
 	if (!window) exit(EXIT_FAILURE);
@@ -149,11 +150,7 @@ BenchmarkTimeWriter* benchmark_setup() {
 }
 
 
-void empty_scene(
-    ) {
-  //todo
-}
-void bench_init_0(
+void bench_init_rnd(
     Camera *cam, Scene  *sce,
     BenchmarkTimeWriter *benchfile,
     AdditionalInputs *addin=nullptr) {
@@ -176,6 +173,72 @@ void bench_init_0(
       );
 }
 
+void bench_init_empty(
+    Camera *cam, Scene  *sce,
+    BenchmarkTimeWriter *benchfile,
+    AdditionalInputs *addin=nullptr) {
+  if (addin != nullptr)
+    std::cout << "bench_init_empty : addin given but not needed" << std::endl;
+
+  SceneBuilder sceBui;
+  sceBui.generate_scene(
+      SceneBuilder::PreBuiltScene::none,
+      sce, cam
+      );
+  benchfile->n_objs_   = sce->getShapesNum();
+  benchfile->n_lights_ = sce->getLightsNum();
+}
+
+void bench_init_easy_0(
+    Camera *cam, Scene  *sce,
+    BenchmarkTimeWriter *benchfile,
+    AdditionalInputs *addin=nullptr) {
+  if (addin != nullptr)
+    std::cout << "bench_init_easy_0 : addin given but not needed" << std::endl;
+
+  SceneBuilder sceBui;
+  sceBui.generate_scene(
+      SceneBuilder::PreBuiltScene::easy_0,
+      sce, cam
+      );
+  benchfile->n_objs_   = sce->getShapesNum();
+  benchfile->n_lights_ = sce->getLightsNum();
+}
+
+void bench_init_easy_1(
+    Camera *cam, Scene  *sce,
+    BenchmarkTimeWriter *benchfile,
+    AdditionalInputs *addin=nullptr) {
+  if (addin != nullptr)
+    std::cout << "bench_init_easy_1 : addin given but not needed" << std::endl;
+
+  SceneBuilder sceBui;
+  sceBui.generate_scene(
+      SceneBuilder::PreBuiltScene::easy_1,
+      sce, cam
+      );
+  benchfile->n_objs_   = sce->getShapesNum();
+  benchfile->n_lights_ = sce->getLightsNum();
+}
+
+void bench_init_medium_1(
+    Camera *cam, Scene  *sce,
+    BenchmarkTimeWriter *benchfile,
+    AdditionalInputs *addin=nullptr) {
+  if (addin != nullptr)
+    std::cout << "bench_init_medium_1 : addin given but not needed" << std::endl;
+
+  SceneBuilder sceBui;
+  sceBui.generate_scene(
+      SceneBuilder::PreBuiltScene::medium_1,
+      sce, cam
+      );
+  benchfile->n_objs_   = sce->getShapesNum();
+  benchfile->n_lights_ = sce->getLightsNum();
+}
+
+
+
 void run_benchmarking(
 	GLFWwindow* window,
   uchar4* devPtr,
@@ -191,11 +254,15 @@ void run_benchmarking(
   Camera *cam = new Camera();
   Scene  *sce = new Scene();
 
+  std::cout << "before bench_scene" << std::endl;
   bench_scene(cam,sce,benchfile, addin);
+  std::cout << "after bench_scene" << std::endl;
 
   Renderer renderer(cam, sce);
 
+  std::cout << "before map_resource" << std::endl;
   map_resource(&devPtr);
+  std::cout << "after map_resource" << std::endl;
   renderer.verbose(false);
   renderer.benchmarking(true, benchfile);
   renderer.render(devPtr);
@@ -204,7 +271,8 @@ void run_benchmarking(
   std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
-  int num_frames = 10;
+  //int num_frames = 10;
+  int num_frames = 50;
   for (int i=0; i<num_frames; i++) {
     //double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
     //if
@@ -235,7 +303,7 @@ void run_benchmarking(
   //std::chrono::steady_clock::time_point t1_total = std::chrono::steady_clock::now();
 
   //benchfile->total_microsec_ = std::chrono::duration_cast<std::chrono::microseconds>(t1_total - t0_total).count();
-  benchfile->additional_ = "nada";
+  //benchfile->additional_ = "nada";
   benchfile->write();
 }
 
@@ -252,7 +320,6 @@ int main() {
   BenchmarkTimeWriter *benchfile = benchmark_setup();
 
   AdditionalInputs *addin = new AdditionalInputs();
-
   //for (int i=0; i<101; i++) {
   for (int i=0; i<51; i++) {
     std::cout << "Benchmarking " << i << std::endl;
@@ -268,10 +335,43 @@ int main() {
 
     benchfile->id_ = i;
     run_benchmarking(window, devPtr, benchfile,
-        bench_init_0, addin
+        bench_init_rnd, addin
         );
   }
 
+  benchfile->rnd_or_enc_ = 1;
+  benchfile->id_++;
+  std::cout << "Benchmarking " <<
+    "bench_init_empty" <<
+    std::endl;
+  benchfile->additional_ = "bench_init_empty";
+  run_benchmarking(window, devPtr, benchfile, bench_init_empty);
+
+  benchfile->id_++;
+  std::cout << "Benchmarking " <<
+    "bench_init_easy_0" <<
+    std::endl;
+  benchfile->additional_ = "bench_init_easy_0";
+  run_benchmarking(window, devPtr, benchfile, bench_init_easy_0);
+  std::cout << "done" << std::endl;
+
+  benchfile->id_++;
+  std::cout << "Benchmarking " <<
+    "bench_init_easy_1" <<
+    std::endl;
+  benchfile->additional_ = "bench_init_easy_1";
+  run_benchmarking(window, devPtr, benchfile, bench_init_easy_1);
+
+  benchfile->id_++;
+  std::cout << "Benchmarking " <<
+    "bench_init_medium_1" <<
+    std::endl;
+  benchfile->additional_ = "bench_init_medium_1";
+  run_benchmarking(window, devPtr, benchfile, bench_init_medium_1);
+
+
+
+  // END
   benchfile->close();
   device_terminate();
 

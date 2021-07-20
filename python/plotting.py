@@ -1,23 +1,68 @@
 #!/bin/ipython3
 
 import pandas as pd
-#from plotnine import ggplot, aes, ggsave, geom_line, geom_hline, geom_bar, geom_col, xlab, ylab
-#from dplython import (DplyFrame, X, diamonds,
-#        select, sift, sample_n,
-#        sample_frac, nrow, rename,
-#        head, arrange, mutate, group_by, summarize, DelayFunction) 
 from plotnine import *
 from dplython import *
 
-times_filename = "1626794343.txt"
+times_filename = "1626853056.txt"
 
-#times_dir = "../times/" 
 times_dir = "./times/"
 
 times_csv = pd.read_csv(times_dir + times_filename)
 times_dpl = DplyFrame(times_csv)
 
 (times_dpl >> head(1))
+
+# -----------------------------------------------------------------------------------
+# Per Frame comparison
+print("Per Frame comparison")
+data_to_show_parz1 = \
+        pd.DataFrame(
+                (
+                    times_dpl >>
+                    sift(X.rnd_or_enc == 1) >>
+                    select(X.id, X.seed_or_code, X.additional, X.frame_num, X.total_microsec, X.update_time, X.render_time)
+                    )
+                )
+#data_to_show_parz1["time_type"] = "update"
+
+
+data_to_show = (DplyFrame(
+        data_to_show_parz1#.append(
+            #data_to_show_parz2.append(
+            #    data_to_show_parz3
+            #    )
+            #)
+        ) #>> sift(X.id == 1) ## TODO remove
+        )
+data_to_show["30_fps_line"] = 1e6/30
+data_to_show["30_fps_line_label"] = "30fps"
+
+p = \
+(
+    ggplot(data_to_show) +
+    aes(x="frame_num", y="render_time") +
+    geom_line(alpha=0.7) +
+    facet_wrap("additional") +
+    geom_hline(aes(yintercept="30_fps_line"), color="red") +
+    geom_text(aes(data_to_show.frame_num.max()+1.5,"30_fps_line",label="30_fps_line_label")) +
+    xlab("Frame Num") +
+    ylab("Time(µs)") #+
+    #guides(fill=guide_legend(title="Time of ")) +
+    #theme_minimal() #+
+    #theme(axis_text_x = element_text(angle = 45, hjust = 1))
+)
+p
+
+filename = times_filename.removesuffix(".txt") + "_frame_comparison.png"
+print("filename = ", filename)
+ggsave(p,filename,
+        #device="png",
+        #device="pdf",
+        #width=330, height=200#, units="px"
+        width=12*2, height=5*2, units="cm"
+        )
+
 
 
 # -----------------------------------------------------------------------------------

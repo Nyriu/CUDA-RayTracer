@@ -34,9 +34,9 @@ class Scene {
     __device__ __host__ bool hasAmbientLight() const { return ambientLight_ != nullptr; }
 
     __device__ ImplicitShape* getShapes() const;
-    __device__ int getShapesNum() const { return shapes_num_; }
+    __host__ __device__ int getShapesNum() const { return shapes_num_; }
     __device__ Light* getLights() const { return devLights_; }
-    __device__ int getLightsNum() const { return lights_num_; }
+    __host__ __device__ int getLightsNum() const { return lights_num_; }
     __device__ AmbientLight* getAmbientLight() const { return devAmbLight_; }
 
   private:

@@ -4,7 +4,7 @@
 #include <iostream>
 
 
-static __global__ void kernel(uchar4 *ptr,
+static __global__ void render_kernel(uchar4 *ptr,
     const Camera *cam,
     const Scene *sce,
     const Tracer *trc//, const float2 *AA_array, const int AA_array_len
@@ -25,7 +25,7 @@ static __global__ void kernel(uchar4 *ptr,
   color c = trc->trace(&r, sce);
 
   /// // TENTATIVO AA
-  ///for (int i=0; i<AA_array_len; i++) {
+  ///for (int i=0; i<AA_array_len; i++) {il passaggio del buffer ad OpenGL.
   ///  Ray aar = cam->generate_ray(
   ///      (x + .5 + AA_array[i].x) / ((float) IMG_W -1),
   ///      (y + .5 + AA_array[i].y) / ((float) IMG_H -1)
@@ -142,7 +142,7 @@ __host__ void Renderer::render(uchar4 *devPtr) {
   //  "generating frame num " <<
   //  current_tick_ << "\n" << std::endl;
 
-  kernel<<<grids,threads>>>(devPtr, devCamPtr_, devScePtr_, devTrcPtr_//,
+  render_kernel<<<grids,threads>>>(devPtr, devCamPtr_, devScePtr_, devTrcPtr_//,
       //dev_AA_array, AA_array_len
       );
   HANDLE_ERROR(cudaDeviceSynchronize());

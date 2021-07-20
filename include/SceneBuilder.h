@@ -22,7 +22,8 @@ class SceneBuilder {
     BenchmarkTimeWriter *bTWriter_;
 
   public:
-    enum PreBuiltScene { none, simple_moving };
+    //enum PreBuiltScene { none, simple_moving, empty, easy_0, easy_1, medium_0, medium_1, hard_0, hard_1, impossible };
+    enum PreBuiltScene { none, simple_moving, empty, easy_0, easy_1,             medium_1};
 
     SceneBuilder(
         int n_objs = 5,
@@ -56,6 +57,20 @@ class SceneBuilder {
   private:
     bool genSce_random(Scene *sce, Camera *cam) const;
     bool genSce_simple_moving(Scene *sce, Camera *cam) const;
+
+    // benchmarking scenes
+    bool genSce_empty(Scene *sce, Camera *cam) const;
+
+    bool genSce_easy_0(Scene *sce, Camera *cam) const;
+    bool genSce_easy_1(Scene *sce, Camera *cam) const;
+
+    bool genSce_medium_0(Scene *sce, Camera *cam) const;
+    bool genSce_medium_1(Scene *sce, Camera *cam) const;
+
+    bool genSce_hard_0(Scene *sce, Camera *cam) const;
+    bool genSce_hard_1(Scene *sce, Camera *cam) const;
+
+    bool genSce_impossible(Scene *sce, Camera *cam) const;
 };
 
 #endif

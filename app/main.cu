@@ -106,40 +106,45 @@ int main() {
 
   SceneBuilder sceBui(5,1);
   sceBui.generate_scene(
-      SceneBuilder::PreBuiltScene::none,
+      //SceneBuilder::PreBuiltScene::none,
+      //SceneBuilder::PreBuiltScene::empty,
+      //SceneBuilder::PreBuiltScene::easy_0,
+      SceneBuilder::PreBuiltScene::easy_1,
+      //SceneBuilder::PreBuiltScene::medium_1,
       sce, cam
       );
 
   //Renderer renderer(cam, sce);
-  Renderer renderer(cam, sce, 1); // limit num of generated frames
+  //Renderer renderer(cam, sce, 1); // limit num of generated frames
+  //Renderer renderer(cam, sce, 10); // limit num of generated frames
+  Renderer renderer(cam, sce, 50); // limit num of generated frames
 
   map_resource(&devPtr);
   renderer.render(devPtr);
   unmap_resource();
 
-  std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
-  std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-
+  //std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+  //std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
   int i=0;
 	//while (!glfwWindowShouldClose(window) && i<20) {
 	while (!glfwWindowShouldClose(window)) {
-    double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-    if
-      // (elapsed >= 3000000)
-      (elapsed >= 16000000)
-        //(elapsed >= 500000000)
-        //(elapsed >= 1000000000)
-      {
+    //double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+    //if
+    //  // (elapsed >= 3000000)
+    //  (elapsed >= 16000000)
+    //    //(elapsed >= 500000000)
+    //    //(elapsed >= 1000000000)
+    //  {
       //std::cout << "\n----- elapsed = " << elapsed << "[ns]\n" << std::endl;
 
       map_resource(&devPtr);
       renderer.render(devPtr);
       unmap_resource();
 
-      t0=t1;
-    }
-    t1 = std::chrono::steady_clock::now();
+    //  t0=t1;
+    //}
+    //t1 = std::chrono::steady_clock::now();
 
 		glDrawPixels(IMG_W, IMG_H, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 		glfwSwapBuffers(window);
