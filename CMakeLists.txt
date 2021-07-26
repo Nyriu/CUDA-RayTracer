@@ -81,6 +81,14 @@ set_target_properties(benchmarking
 target_link_libraries(benchmarking PRIVATE MyLib glm glfw GL)
 
 
+add_executable(example app/example.cu)
+set_property(TARGET example PROPERTY CUDA_ARCHITECTURES 75)
+set_target_properties(example
+  PROPERTIES CUDA_SEPARABLE_COMPILATION ON
+  )
+target_link_libraries(example PRIVATE MyLib glm glfw GL)
+
+
 #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_50,code=sm_50") # works but bad solution
 # TODO make work the one below and remove the one above
 #target_compile_options(particle_test PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:"-gencode arch=compute_50,code=sm_50">) 

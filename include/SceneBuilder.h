@@ -31,7 +31,10 @@ class SceneBuilder {
         ) :
       rand_seed_(-1),
       n_objs_(n_objs),
-      n_lights_(n_lights) {}
+      n_lights_(n_lights) {
+        bTWriter_ = new BenchmarkTimeWriter;
+      }
+
 
     SceneBuilder(
         int n_objs,
@@ -50,7 +53,9 @@ class SceneBuilder {
         ) :
       rand_seed_(rand_seed),
       n_objs_(n_objs),
-      n_lights_(n_lights) {}
+      n_lights_(n_lights) {
+        bTWriter_ = new BenchmarkTimeWriter;
+      }
 
     bool generate_scene(Scene *sce, Camera *cam) const;
     bool generate_scene(PreBuiltScene scene_idx, Scene *sce, Camera *cam) const;

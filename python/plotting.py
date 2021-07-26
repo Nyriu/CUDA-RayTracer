@@ -1,5 +1,6 @@
 #!/bin/ipython3
 
+import os
 import pandas as pd
 from plotnine import *
 from dplython import *
@@ -10,7 +11,15 @@ from dplython import *
 # lanciare ./old_plotting.py per grafici relazione
 
 times_dir = "../times/"
-times_filename = "1627287470.txt"
+#times_dir = "./times/"
+
+#times_filename = "1627296561.txt"
+#times_filename = "1627297107.txt"
+times_filename = "1627309714.txt"
+
+out_dir = "./comparisons/" + times_filename.removesuffix(".txt") + "/"
+out_dir
+os.makedirs(out_dir, exist_ok=True)
 
 times_csv = pd.read_csv(times_dir + times_filename)
 times_dpl = DplyFrame(times_csv)
@@ -26,6 +35,7 @@ data_to_show_parz1 = \
                     times_dpl >>
                     sift(X.rnd_or_enc == 1) >>
                     select(X.id, X.seed_or_code, X.additional, X.frame_num,
+                        X.grids_x, X.grids_y, X.grids_z, X.threads_x, X.threads_y, X.threads_z,
                         X.total_microsec, X.update_time, X.render_time,
                         )
                     ) >>
@@ -34,7 +44,6 @@ data_to_show_parz1 = \
                     update_time=X.update_time,
                     render_time=X.render_time,
                     )
-                    
                 )
 data_to_show_parz1["time_type"] = "host"
 
@@ -44,6 +53,7 @@ data_to_show_parz2 = \
                     times_dpl >>
                     sift(X.rnd_or_enc == 1) >>
                     select(X.id, X.seed_or_code, X.additional, X.frame_num,
+                        X.grids_x, X.grids_y, X.grids_z, X.threads_x, X.threads_y, X.threads_z,
                         X.cudae_frame, X.cudae_update, X.cudae_render,
                         )
                     ) >>
@@ -62,6 +72,23 @@ data_to_show = (DplyFrame(
             )))
 data_to_show["30_fps_line"] = 1e6/30
 data_to_show["30_fps_line_label"] = "30fps"
+
+title = \
+(
+    "grids(" + \
+    str((data_to_show >> select(X.grids_x) >> head(1)).values[0][0]) + "," + \
+    str((data_to_show >> select(X.grids_y) >> head(1)).values[0][0]) + "," + \
+    str((data_to_show >> select(X.grids_z) >> head(1)).values[0][0]) + \
+    ")" + \
+    "  " + \
+    "threads(" + \
+    str((data_to_show >> select(X.threads_x) >> head(1)).values[0][0]) + "," + \
+    str((data_to_show >> select(X.threads_y) >> head(1)).values[0][0]) + "," + \
+    str((data_to_show >> select(X.threads_z) >> head(1)).values[0][0]) + \
+    ")"
+)
+title
+
 
 p = \
 (
@@ -87,22 +114,26 @@ p = \
     #aes(x="frame_num", y="frame_time", colour="time_type") +
     #geom_line(alpha=0.7, linetype="-.") +
     #geom_line(alpha=0.7) +
-    #geom_point(alpha=0.7) +
+    #geom_point(alpha=0.7) +viewnior python/comparisons/000_DIM_div_16_16x16threads/*frame* &; 
+
 
     facet_wrap("additional") +
     geom_hline(aes(yintercept="30_fps_line"), color="red") +
-    geom_text(aes(data_to_show.frame_num.max()+1.5,"30_fps_line",label="30_fps_line_label")) +
+    geom_text(aes(data_to_show.frame_num.max()+1.5,"30_fps_line",label="30_fps_line_label"), color="black") +
     xlab("Frame Num") +
-    ylab("Time(µs)") #+
+    ylab("Time(µs)") +
     #guides(fill=guide_legend(title="Time of ")) +
     #theme_minimal() #+
     #theme(axis_text_x = element_text(angle = 45, hjust = 1))
+    ggtitle(title)
 )
 p
 
 filename = times_filename.removesuffix(".txt") + "_frame_comparison.png"
+out_filepath = out_dir + filename
 print("filename = ", filename)
-ggsave(p,filename,
+ggsave(p,
+        out_filepath,
         #device="png",
         #device="pdf",
         #width=330, height=200#, units="px"
@@ -176,18 +207,21 @@ p = \
     #geom_line() +
     #geom_line(aes(x="id", y="mean_frame_update_time")) +
     geom_hline(aes(yintercept="30_fps_line"), color="red") +
-    geom_text(aes(data_to_show.id.max()+1.5,"30_fps_line",label="30_fps_line_label")) + #, vjust=1)) +
+    geom_text(aes(data_to_show.id.max()+1.5,"30_fps_line",label="30_fps_line_label"), color="black") +
     scale_x_discrete(name="Scene Num", limits=range(data_to_show.id.max()+2)) +
     ylab("Mean Frame Time(µs)") +
     guides(fill=guide_legend(title="Time of ")) +
-    theme_minimal() +
-    theme(axis_text_x = element_text(angle = 45, hjust = 1))
+    #theme_minimal() +
+    theme(axis_text_x = element_text(angle = 45, hjust = 1)) +
+    ggtitle(title)
 )
 p
 
 filename = times_filename.removesuffix(".txt") + "_mean_time.png"
+out_filepath = out_dir + filename
 print("filename = ", filename)
-ggsave(p,filename,
+ggsave(p,
+        out_filepath,
         #device="png",
         #device="pdf",
         #width=330, height=200#, units="px"
@@ -244,13 +278,17 @@ p = \
     scale_x_discrete(name="Scene Num", limits=range(data_to_show.id.max()+1)) +
     ylab("Number") +
     guides(fill=guide_legend(title="")) +
-    theme_minimal() +
-    theme(axis_text_x  = element_text(angle = 45, hjust = 1))
+    #theme_minimal() +
+    theme(axis_text_x  = element_text(angle = 45, hjust = 1)) +
+    ggtitle(title)
 )
 p
 
 filename = times_filename.removesuffix(".txt") + "_scene_complexity.png"
-ggsave(p,filename,
+out_filepath = out_dir + filename
+print("filename = ", filename)
+ggsave(p,
+        out_filepath,
         #device="png",
         #device="pdf",
         #width=330, height=200#, units="px"
@@ -258,5 +296,65 @@ ggsave(p,filename,
         )
 
 
+
+
+# -----------------------------------------------------------------------------------
+# Frames
+print("Frames")
+data_to_show_parz1 = \
+        pd.DataFrame(
+                (
+                    times_dpl >>
+                    #sift(X.rnd_or_enc == 1) >>
+                    # just all entries
+                    select(X.id, X.seed_or_code, X.additional, X.frame_num,
+                        X.grids_x, X.grids_y, X.grids_z, X.threads_x, X.threads_y, X.threads_z,
+                        X.total_microsec, X.update_time, X.render_time,
+                        X.n_objs
+                        )
+                    ) >>
+                rename(
+                    frame_time=X.total_microsec,
+                    update_time=X.update_time,
+                    render_time=X.render_time,
+                    )
+                )
+
+
+data_to_show = DplyFrame(data_to_show_parz1)
+            
+data_to_show["30_fps_line"] = 1e6/30
+data_to_show["30_fps_line_label"] = "30fps"
+
+p = \
+(
+    ggplot(data_to_show) +
+    aes(x="frame_num", y="frame_time", colour="n_objs", group="id") +
+    geom_line(alpha=0.3) +
+    geom_point(alpha=0.3) +
+    coord_cartesian(ylim=(0,1e6/30*2)) +
+
+    geom_hline(aes(yintercept="30_fps_line"), color="red") +
+    geom_text(aes(data_to_show.frame_num.max()+1.5,"30_fps_line",label="30_fps_line_label"), color="black") +
+    xlab("Frame Num") +
+    ylab("Time(µs)") +
+    #guides(fill=guide_legend(title="Time of ")) +
+    #theme_minimal() #+
+    #theme(axis_text_x = element_text(angle = 45, hjust = 1))
+    ggtitle(title)
+)
+p
+
+filename = times_filename.removesuffix(".txt") + "_frames.png"
+out_filepath = out_dir + filename
+print("filename = ", filename)
+ggsave(p,
+        out_filepath,
+        #device="png",
+        #device="pdf",
+        #width=330, height=200#, units="px"
+        #width=12*2, height=5*2, units="cm"
+        width=12*4, height=5*4, units="cm"
+        )
 
 

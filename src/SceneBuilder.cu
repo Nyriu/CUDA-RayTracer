@@ -22,6 +22,8 @@ bool SceneBuilder::generate_scene(
   }
   srand((unsigned)seed);
   bTWriter_->n_objs_ = n_objs_;
+
+  bTWriter_->n_objs_ = n_objs_;
   bTWriter_->n_lights_ = n_lights_;
 
   bTWriter_->rnd_or_enc_ = 0;

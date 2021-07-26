@@ -13,7 +13,10 @@ static __global__ void render_kernel(uchar4 *ptr,
   // map from threadIdx/BlockIdx to pixel positioa
   int x = threadIdx.x + blockIdx.x * blockDim.x;
   int y = threadIdx.y + blockIdx.y * blockDim.y;
-  int offset = x + y * blockDim.x * gridDim.x;
+  //int offset = x + y * blockDim.x * gridDim.x;
+  int offset = x + y * IMG_W;
+
+  if (offset >= IMG_H*IMG_H) return;
 
   // in img coord (0,0) is bottom-left
   // Put coords in [0,1]
@@ -75,13 +78,32 @@ __host__ Renderer::Renderer(
 
 __host__ void Renderer::render(uchar4 *devPtr) {
   // --- Generate One Frame ---
-  // TODO dims
-  //dim3 grids(IMG_W/16, IMG_H/16);
+
+  //dim3 grids(IMG_W, IMG_H);
+  //dim3 threads(1);
+
+  dim3 grids(IMG_W/16, IMG_H/16);
+  dim3 threads(16,16);
+
+  //dim3 grids(32,32); // same as the one above
   //dim3 threads(16,16);
-  dim3 grids(IMG_W, IMG_H);
-  dim3 threads(1);
-  //float grids = 1;
+
+  //dim3 grids(30,30);
+  //dim3 threads(18,18);
+
+  //cudaDeviceProp prop;
+  //int count;
+  //HANDLE_ERROR( cudaGetDeviceCount( &count) );
+  //if (count < 0) exit(0); // TODO handle better
+  //HANDLE_ERROR( cudaGetDeviceProperties( &prop, 0 ));
+  //int sm_count = prop.multiProcessorCount;
+  //dim3 grids(sm_count);
   //dim3 threads(IMG_W, IMG_H);
+
+  if (benchmarking_) {
+    bTWriter_->grids_ = grids;
+    bTWriter_->threads_ = threads;
+  }
 
   if (!done_cuda_free_ && current_tick_ == max_num_tick_) {
     HANDLE_ERROR(cudaFree((void*)devCamPtr_));

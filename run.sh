@@ -29,6 +29,8 @@ fi
 
 if [ "$1" == "-b" ]; then
   ./executable/benchmarking
+elif [ "$1" == "-e" ]; then
+  ./executable/example
 else
   ./executable/main
 fi

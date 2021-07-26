@@ -321,15 +321,15 @@ int main() {
 
   AdditionalInputs *addin = new AdditionalInputs();
   //for (int i=0; i<101; i++) {
-  ///for (int i=0; i<51; i++) {
-  for (int i=0; i<11; i++) {
+  for (int i=0; i<51; i++) {
+  ////for (int i=0; i<11; i++) {
     std::cout << "Benchmarking " << i << std::endl;
 
     if (i == 0) addin->n_objs = 0;
     //else if ((i-1)% 10 == 0) addin->n_objs = addin->n_objs + 5;
-    ///else if ((i-1)% 5 == 0) addin->n_objs = addin->n_objs + 2;
-    ///else addin->n_objs = addin->n_objs;
-    else addin->n_objs = addin->n_objs + 2;
+    else if ((i-1)% 5 == 0) addin->n_objs = addin->n_objs + 2;
+    else addin->n_objs = addin->n_objs;
+    ////else addin->n_objs = addin->n_objs + 2;
 
     addin->n_lights = 1;
     std::cout << "n_objs   = " << addin->n_objs << std::endl;

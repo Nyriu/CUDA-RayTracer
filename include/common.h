@@ -56,6 +56,10 @@ class BenchmarkTimeWriter {
     int n_lights_;
     int rnd_or_enc_=0;
     int seed_or_code_;
+
+    dim3 grids_;
+    dim3 threads_;
+
     //int total_microsec_;
     int total_microsec_[50] = { 0 };
     int update_[50] = { 0 }; // host timing
@@ -63,6 +67,7 @@ class BenchmarkTimeWriter {
     int cudae_update_[50] = { 0 }; // cuda event timing
     int cudae_render_[50] = { 0 }; // cuda event timing
     int cudae_frame_[50] = { 0 }; // cuda event timing
+
     std::string additional_;
   public:
     BenchmarkTimeWriter() = default;
@@ -77,6 +82,15 @@ class BenchmarkTimeWriter {
         myfile_ << "n_lights" << ",";
         myfile_ << "rnd_or_enc" << ",";
         myfile_ << "seed_or_code" << ",";
+
+        myfile_ << "grids_x" << ",";
+        myfile_ << "grids_y" << ",";
+        myfile_ << "grids_z" << ",";
+
+        myfile_ << "threads_x" << ",";
+        myfile_ << "threads_y" << ",";
+        myfile_ << "threads_z" << ",";
+
         myfile_ << "frame_num" << ",";
         myfile_ << "total_microsec" << ",";
         myfile_ << "update_time" << ",";
@@ -102,6 +116,15 @@ class BenchmarkTimeWriter {
         myfile_ << n_lights_  << ",";
         myfile_ << rnd_or_enc_ << ",";
         myfile_ << seed_or_code_ << ",";
+
+        myfile_ << grids_.x << ",";
+        myfile_ << grids_.y << ",";
+        myfile_ << grids_.z << ",";
+
+        myfile_ << threads_.x << ",";
+        myfile_ << threads_.y << ",";
+        myfile_ << threads_.z << ",";
+
         myfile_ << i+1  << ",";
         //myfile_ << total_microsec_  << ",";
         myfile_ << total_microsec_[i] << ",";

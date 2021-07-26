@@ -27,6 +27,11 @@
 
 ![](./imgs/animation.gif)
 
+* Times
 
+![](./imgs/1627309714_frame_comparison.png)
 
+![](./imgs/1627309714_mean_time.png)
+
+![](./imgs/1627309714_scene_complexity.png)
 
