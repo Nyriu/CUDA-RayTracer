@@ -118,6 +118,7 @@ int main() {
   //Renderer renderer(cam, sce, 1); // limit num of generated frames
   //Renderer renderer(cam, sce, 10); // limit num of generated frames
   Renderer renderer(cam, sce, 50); // limit num of generated frames
+  renderer.verbose(true);
 
   map_resource(&devPtr);
   renderer.render(devPtr);

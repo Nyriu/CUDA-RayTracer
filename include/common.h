@@ -58,8 +58,11 @@ class BenchmarkTimeWriter {
     int seed_or_code_;
     //int total_microsec_;
     int total_microsec_[50] = { 0 };
-    int update_[50] = { 0 };
-    int render_[50] = { 0 };
+    int update_[50] = { 0 }; // host timing
+    int render_[50] = { 0 }; // host timing
+    int cudae_update_[50] = { 0 }; // cuda event timing
+    int cudae_render_[50] = { 0 }; // cuda event timing
+    int cudae_frame_[50] = { 0 }; // cuda event timing
     std::string additional_;
   public:
     BenchmarkTimeWriter() = default;
@@ -82,6 +85,10 @@ class BenchmarkTimeWriter {
         //  myfile_ << "update_" << i << ",";
         //  myfile_ << "render_" << i << ",";
         //}
+        myfile_ << "cudae_frame" << ",";
+        myfile_ << "cudae_update" << ",";
+        myfile_ << "cudae_render" << ",";
+
         myfile_ << "additional" << "\n";
       }
 
@@ -100,6 +107,11 @@ class BenchmarkTimeWriter {
         myfile_ << total_microsec_[i] << ",";
         myfile_ << update_[i] << ",";
         myfile_ << render_[i] << ",";
+
+        myfile_ << cudae_update_[i] << ",";
+        myfile_ << cudae_render_[i] << ",";
+        myfile_ << cudae_frame_ [i] << ",";
+
         myfile_ << additional_ << "\n";
       }
     }

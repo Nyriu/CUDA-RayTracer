@@ -99,16 +99,41 @@ __host__ void Renderer::render(uchar4 *devPtr) {
     std::cout << "\nRenderer::render : ERROR bad device initialization?" << std::endl;
   }
 
+  cudaEvent_t start_frame, stop_frame;
+  HANDLE_ERROR(cudaEventCreate(&start_frame));
+  HANDLE_ERROR(cudaEventCreate(&stop_frame));
+
+
+  cudaEvent_t start_update, stop_update;
+  HANDLE_ERROR(cudaEventCreate(&start_update));
+  HANDLE_ERROR(cudaEventCreate(&stop_update));
+
   std::chrono::steady_clock::time_point t0_update = std::chrono::steady_clock::now();
+  HANDLE_ERROR(cudaEventRecord(start_frame));
+  HANDLE_ERROR(cudaEventRecord(start_update));
+
   kernel_update_scene<<<1,1>>>(devScePtr_);
-  HANDLE_ERROR(cudaDeviceSynchronize());
+
+  HANDLE_ERROR(cudaEventRecord(stop_update));
+  HANDLE_ERROR(cudaEventSynchronize(stop_update));
+  //HANDLE_ERROR(cudaDeviceSynchronize());
+  // qua t1
   std::chrono::steady_clock::time_point t1_update = std::chrono::steady_clock::now();
+
+  float update_time = .0f;
+  HANDLE_ERROR(cudaEventElapsedTime(&update_time, start_update, stop_update));
+  update_time *= 1000; // ms to microseconds
+
   if (verbose_) {
-    std::cout << "Update Time = " << std::chrono::duration_cast<std::chrono::     seconds>(t1_update - t0_update).count() << "[s]" << std::endl;
-    std::cout << "Update Time = " << std::chrono::duration_cast<std::chrono::microseconds>(t1_update - t0_update).count() << "[µs]" << std::endl;
+    std::cout <<
+      "Update Time = " << std::chrono::duration_cast<std::chrono::     seconds>(t1_update - t0_update).count() << "[s]\n" <<
+      "Update Time = " << std::chrono::duration_cast<std::chrono::microseconds>(t1_update - t0_update).count() << "[µs]\n" <<
+      "(CUDAEvent) Update Time = " << update_time << "[µs]\n" <<
+      std::endl;
   }
   if (benchmarking_) {
     bTWriter_->update_[current_tick_] = std::chrono::duration_cast<std::chrono::microseconds>(t1_update - t0_update).count();
+    bTWriter_->cudae_update_[current_tick_] = update_time;
   }
 
 
@@ -142,20 +167,47 @@ __host__ void Renderer::render(uchar4 *devPtr) {
   //  "generating frame num " <<
   //  current_tick_ << "\n" << std::endl;
 
+  //cudaStream_t stream;
+  //cudaStreamCreate(&stream);
+  cudaEvent_t start_render, stop_render;
+  HANDLE_ERROR(cudaEventCreate(&start_render));
+  HANDLE_ERROR(cudaEventCreate(&stop_render));
+
+
+  //cudaEventRecord(start, stream);
+  HANDLE_ERROR(cudaEventRecord(start_render));
   render_kernel<<<grids,threads>>>(devPtr, devCamPtr_, devScePtr_, devTrcPtr_//,
+  //render_kernel<<<grids,threads,0,stream>>>(devPtr, devCamPtr_, devScePtr_, devTrcPtr_//,
       //dev_AA_array, AA_array_len
       );
-  HANDLE_ERROR(cudaDeviceSynchronize());
+  HANDLE_ERROR(cudaEventRecord(stop_render));
+  HANDLE_ERROR(cudaEventRecord(stop_frame));
+  HANDLE_ERROR(cudaEventSynchronize(stop_render));
+  HANDLE_ERROR(cudaEventSynchronize(stop_frame));
+  //HANDLE_ERROR(cudaDeviceSynchronize());
   // qua t1
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+  float render_time = .0f;
+  HANDLE_ERROR(cudaEventElapsedTime(&render_time, start_render, stop_render));
+  render_time *= 1000; // ms to microseconds
+
+  float frame_time = .0f; // update+render
+  HANDLE_ERROR(cudaEventElapsedTime(&frame_time, start_frame, stop_frame));
+  frame_time *= 1000; // ms to microseconds
+
   if (verbose_) {
     std::cout <<
       "Frame Num = " << current_tick_ << "\n" << 
-      "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::     seconds>(end - begin).count() << "[s]\n" <<
-      "Frame Gen Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]\n" << std::endl;
+      "Render Time = " << std::chrono::duration_cast<std::chrono::     seconds>(end - begin).count() << "[s]\n" <<
+      "Render Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]\n" << //std::endl;
+      "(CUDAEvent) Render Time = " << render_time << "[µs]\n" <<
+      "\n(CUDAEvent) Frame Time = " << frame_time << "[µs]\n" << std::endl;
   }
   if (benchmarking_) {
     bTWriter_->render_[current_tick_] = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+    bTWriter_->cudae_render_[current_tick_] = render_time;
+    bTWriter_->cudae_frame_[current_tick_] = frame_time;
   }
 
 
@@ -163,7 +215,7 @@ __host__ void Renderer::render(uchar4 *devPtr) {
   //HANDLE_ERROR(cudaFree((void*)devScePtr_));
   //HANDLE_ERROR(cudaFree((void*)devTrcPtr_));
 
-  HANDLE_ERROR(cudaDeviceSynchronize());
+  //HANDLE_ERROR(cudaDeviceSynchronize());
 
   current_tick_++;
 }

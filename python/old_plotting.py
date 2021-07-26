@@ -4,13 +4,9 @@ import pandas as pd
 from plotnine import *
 from dplython import *
 
+times_filename = "1626853056.txt"
 
-#times_dir = "./times/"
-#times_filename = "1626853056.txt" // file della relazione // ora probabilmente non funziona perche' gli mancano colonne
-# lanciare ./old_plotting.py per grafici relazione
-
-times_dir = "../times/"
-times_filename = "1627287470.txt"
+times_dir = "./times/"
 
 times_csv = pd.read_csv(times_dir + times_filename)
 times_dpl = DplyFrame(times_csv)
@@ -25,70 +21,28 @@ data_to_show_parz1 = \
                 (
                     times_dpl >>
                     sift(X.rnd_or_enc == 1) >>
-                    select(X.id, X.seed_or_code, X.additional, X.frame_num,
-                        X.total_microsec, X.update_time, X.render_time,
-                        )
-                    ) >>
-                rename(
-                    frame_time=X.total_microsec,
-                    update_time=X.update_time,
-                    render_time=X.render_time,
-                    )
-                    
-                )
-data_to_show_parz1["time_type"] = "host"
-
-data_to_show_parz2 = \
-        pd.DataFrame(
-                (
-                    times_dpl >>
-                    sift(X.rnd_or_enc == 1) >>
-                    select(X.id, X.seed_or_code, X.additional, X.frame_num,
-                        X.cudae_frame, X.cudae_update, X.cudae_render,
-                        )
-                    ) >>
-                rename(
-                    frame_time =X.cudae_frame,
-                    update_time=X.cudae_update,
-                    render_time=X.cudae_render,
+                    select(X.id, X.seed_or_code, X.additional, X.frame_num, X.total_microsec, X.update_time, X.render_time)
                     )
                 )
-data_to_show_parz2["time_type"] = "device"
+#data_to_show_parz1["time_type"] = "update"
 
 
 data_to_show = (DplyFrame(
-        data_to_show_parz1.append(
-            data_to_show_parz2
-            )))
+        data_to_show_parz1#.append(
+            #data_to_show_parz2.append(
+            #    data_to_show_parz3
+            #    )
+            #)
+        ) #>> sift(X.id == 1) ## TODO remove
+        )
 data_to_show["30_fps_line"] = 1e6/30
 data_to_show["30_fps_line_label"] = "30fps"
 
 p = \
 (
-    ggplot(
-        (
-            data_to_show #>> sift(X.id >= 13) #>>
-            #sift(X.frame_num < 5)
-            #sift(X.time_type == "device") >>
-            #>> select(X.id, X.frame_num, X.render_time) #>> select(X.id, X.frame_num)
-        )
-        ) +
-    #ggplot(data_to_show) +
-    #aes(x="frame_num", y="render_time", colour="time_type") +
-
-    aes(x="frame_num", y="render_time", colour="time_type") +
+    ggplot(data_to_show) +
+    aes(x="frame_num", y="render_time") +
     geom_line(alpha=0.7) +
-    geom_point(alpha=0.7) +
-
-    #aes(x="frame_num", y="update_time", colour="time_type") +
-    #geom_line(alpha=0.7, linetype="-") +
-    #geom_point(alpha=0.7) +
-
-    #aes(x="frame_num", y="frame_time", colour="time_type") +
-    #geom_line(alpha=0.7, linetype="-.") +
-    #geom_line(alpha=0.7) +
-    #geom_point(alpha=0.7) +
-
     facet_wrap("additional") +
     geom_hline(aes(yintercept="30_fps_line"), color="red") +
     geom_text(aes(data_to_show.frame_num.max()+1.5,"30_fps_line",label="30_fps_line_label")) +
